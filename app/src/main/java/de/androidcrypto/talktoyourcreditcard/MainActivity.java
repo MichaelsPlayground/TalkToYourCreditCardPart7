@@ -239,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             writeToUiAppend(dumpSingleData(applicationTransactionCounter, pinTryCounter, lastOnlineATCRegister, logFormat));
                             writeToUiAppend("");
 
+                            // todo remove code
                             byte[] challenge8Byte = getChallenge(nfc);
                             writeToUiAppend("challenge length: " + challenge8Byte.length + " data: " + bytesToHexNpe(challenge8Byte));
 
@@ -275,7 +276,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     writeToUiAppend("");
                                     writeToUiAppend(pdol.toString());
 
-                                    // using TagAndLength
                                     List<TagAndLength> pdolList = pdol.getTagAndLengthList();
                                     int pdolListSize = pdolList.size();
                                     writeToUiAppend("The card is requesting " + pdolListSize + (pdolListSize == 1 ? " tag" : " tags") + " with length:");
@@ -286,6 +286,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                                 bytesToHexNpe(pdolEntry.getTag().getTagBytes()) +
                                                 "] length " + String.valueOf(pdolEntry.getLength()));
                                     }
+
+                                    // todo show contents from pdol request returned with tags (just a dump)
+                                    // take pdol + command, extract data
 
                                     gpoRequestCommand = getGpoFromPdol(pdolValue);
                                     //gpoRequestCommand = getGetProcessingOptionsFromPdol(pdolValue); // not working for DKB Visa
