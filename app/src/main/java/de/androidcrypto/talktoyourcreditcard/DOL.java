@@ -56,6 +56,13 @@ import java.util.List;
  *
  * Source: https://github.com/sasc999/javaemvreader/blob/master/src/main/java/sasc/emv/DOL.java
  */
+
+/**
+ * This is a modified version of the original DOL.java, it now returns TagAndLength TlvUtil from
+ * import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
+ * import com.github.devnied.emvnfccard.utils.TlvUtil;
+ */
+
 public class DOL {
 
     public enum Type{

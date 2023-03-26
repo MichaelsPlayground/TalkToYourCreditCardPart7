@@ -191,14 +191,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         List<BerTlv> tag4fList = tlv4Fs.findAll(new BerTag(0x4F));
                         if (tag4fList.size() < 1) {
                             writeToUiAppend("there is no tag 0x4F available, stopping here");
-                            setLoadingLayoutVisibility(false);
-                            vibrate();
-                            try {
-                                nfc.close();
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                            return;
+                            startEndSequence(nfc);
                         }
                         writeToUiAppend("Found tag 0x4F " + tag4fList.size() + (tag4fList.size() == 1 ? " time:" : " times:"));
                         ArrayList<byte[]> aidList = new ArrayList<>();
@@ -246,6 +239,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             writeToUiAppend(dumpSingleData(applicationTransactionCounter, pinTryCounter, lastOnlineATCRegister, logFormat));
                             writeToUiAppend("");
 
+                            byte[] challenge8Byte = getChallenge(nfc);
+                            writeToUiAppend("challenge length: " + challenge8Byte.length + " data: " + bytesToHexNpe(challenge8Byte));
+
 
                             /**
                              * step 4 code start
@@ -274,26 +270,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     byte[] pdolValue = tag9f38.getBytesValue();
                                     writeToUiAppend("found tag 0x9F38 in the selectAid with this length: " + pdolValue.length + " data: " + bytesToHexNpe(pdolValue));
 
-                                    /*
-                                    // using code from DOL.java sasc999
-                                    DOL pdol = new DOL(DOL.Type.PDOL, pdolValue);
-                                    writeToUiAppend("");
-                                    writeToUiAppend(pdol.toString());
-
-                                    // using TagAndLength
-                                    List<TagAndLength> pdolList = pdol.getTagAndLengthList();
-                                    int pdolListSize = pdolList.size();
-                                    writeToUiAppend("The card is requesting " + pdolListSize + (pdolListSize == 1 ? " tag" : " tags") + " with length:");
-                                    for (int i = 0; i < pdolListSize; i++) {
-                                        TagAndLength pdolEntry = pdolList.get(i);
-                                        //writeToUiAppend("tag " + (i + 1) + " : " + pdolEntry.getTag().getName() + " [" +
-                                        writeToUiAppend("tag " + String.format("%02d", i + 1) + ": " + pdolEntry.getTag().getName() + " [" +
-                                                bytesToHexNpe(pdolEntry.getTag().getTagBytes()) +
-                                                "] length " + String.valueOf(pdolEntry.getLength()));
-                                    }
-
-                                     */
-
                                     // using modified code from DOL.java sasc999
                                     DOL pdol = new DOL(DOL.Type.PDOL, pdolValue);
                                     writeToUiAppend("");
@@ -310,7 +286,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                                 bytesToHexNpe(pdolEntry.getTag().getTagBytes()) +
                                                 "] length " + String.valueOf(pdolEntry.getLength()));
                                     }
-
 
                                     gpoRequestCommand = getGpoFromPdol(pdolValue);
                                     //gpoRequestCommand = getGetProcessingOptionsFromPdol(pdolValue); // not working for DKB Visa
@@ -524,7 +499,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                                     writeToUiAppend("");
                                                 }
                                             } catch (RuntimeException e) {
-                                                System.out.println("Runtime Exception: " + e.getMessage());
+                                                //System.out.println("Runtime Exception: " + e.getMessage());
+                                                startEndSequence(nfc);
                                             }
                                         } else {
                                             writeToUiAppend("readRecord response was NULL");
@@ -587,11 +563,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } catch (IOException e) {
                     writeToUiAppend("connection with card failure");
                     writeToUiAppend(e.getMessage());
-                    // playPing();
-                    vibrate();
-                    writeToUiFinal(etLog);
-                    setLoadingLayoutVisibility(false);
                     // throw new RuntimeException(e);
+                    startEndSequence(nfc);
                     return;
                 }
             }
@@ -609,6 +582,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         playPing();
         writeToUiFinal(etLog);
         setLoadingLayoutVisibility(false);
+        vibrate();
         try {
             nfc.close();
         } catch (IOException e) {
@@ -715,16 +689,41 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
      */
 
     // Get the data of ATC(Application Transaction Counter, tag '9F36')), template 77 or 80
+    private byte[] getChallenge(IsoDep nfc) {
+        byte[] cmd = new byte[]{(byte) 0x80, (byte) 0x84, (byte) 0x00, (byte) 0x00, (byte) 0x00};
+        byte[] result = new byte[0];
+        try {
+            result = nfc.transceive(cmd);
+        } catch (IOException e) {
+            Log.e(TAG, "* getApplicationTransactionCounter failed");
+            return null;
+        }
+        return result;
+        /*
+        //System.out.println("*** getATC: " + bytesToHexNpe(result));
+        // e.g. visa returns 9f360200459000
+        // e.g. visa returns 9f36020045 9000
+        byte[] resultOk = checkResponse(result);
+        if (resultOk == null) {
+            return null;
+        } else {
+            return getTagValueFromResult(resultOk, (byte) 0x9f, (byte) 0x36);
+        }
+
+         */
+    }
+
+    // Get the data of ATC(Application Transaction Counter, tag '9F36')), template 77 or 80
     private byte[] getApplicationTransactionCounter(IsoDep nfc) {
         byte[] cmd = new byte[]{(byte) 0x80, (byte) 0xCA, (byte) 0x9F, (byte) 0x36, (byte) 0x00};
         byte[] result = new byte[0];
         try {
             result = nfc.transceive(cmd);
         } catch (IOException e) {
-            System.out.println("* getApplicationTransactionCounter failed");
+            Log.e(TAG, "* getApplicationTransactionCounter failed");
             return null;
         }
-        System.out.println("*** getATC: " + bytesToHexNpe(result));
+        //System.out.println("*** getATC: " + bytesToHexNpe(result));
         // e.g. visa returns 9f360200459000
         // e.g. visa returns 9f36020045 9000
         byte[] resultOk = checkResponse(result);
@@ -741,7 +740,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         try {
             result = nfc.transceive(cmd);
         } catch (IOException e) {
-            System.out.println("* getPinTryCounterCounter failed");
+            Log.e(TAG, "* getPinTryCounterCounter failed");
             return null;
         }
         byte[] resultOk = checkResponse(result);
@@ -758,7 +757,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         try {
             result = nfc.transceive(cmd);
         } catch (IOException e) {
-            System.out.println("* getLastOnlineATCRegister failed");
+            Log.e(TAG, "* getLastOnlineATCRegister failed");
             return null;
         }
         byte[] resultOk = checkResponse(result);
@@ -775,7 +774,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         try {
             result = nfc.transceive(cmd);
         } catch (IOException e) {
-            System.out.println("* getLastOnlineATCRegister failed");
+            Log.e(TAG, "* getLastOnlineATCRegister failed");
             return null;
         }
         byte[] resultOk = checkResponse(result);
