@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,7 +55,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     private final String TAG = "MainAct";
-    private com.google.android.material.textfield.TextInputEditText etLog;
+    private com.google.android.material.textfield.TextInputEditText etData, etLog;
     private View loadingLayout;
     private NfcAdapter mNfcAdapter;
 
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(myToolbar);
 
+        etData = findViewById(R.id.etData);
         etLog = findViewById(R.id.etLog);
         loadingLayout = findViewById(R.id.loading_layout);
 
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     @Override
     public void onTagDiscovered(Tag tag) {
-        clearData(etLog);
+        clearData();
         Log.d(TAG, "NFC tag discovered");
         writeToUiAppend("NFC tag discovered");
         playPing();
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     // here we are going to start our journey through the card
 
                     printStepHeader(0, "our journey begins");
+                    writeToUiAppend(etData, "00 reading of the card started");
 
                     writeToUiAppend("increase IsoDep timeout for long reading");
                     writeToUiAppend("timeout old: " + nfc.getTimeout() + " ms");
@@ -134,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     byte[] selectPpseResponse = nfc.transceive(selectPpseCommand);
                     writeToUiAppend("01 select PPSE command  length " + selectPpseCommand.length + " data: " + bytesToHexNpe(selectPpseCommand));
                     writeToUiAppend("01 select PPSE response length " + selectPpseResponse.length + " data: " + bytesToHexNpe(selectPpseResponse));
+                    writeToUiAppend(etData, "01 select PPSE completed");
                     writeToUiAppend(prettyPrintDataToString(selectPpseResponse));
 
                     byte[] selectPpseResponseOk = checkResponse(selectPpseResponse);
@@ -144,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                          * step 1 code end
                          */
 
+                        /*
                         // get the tags from respond
                         BerTlvParser parserA = new BerTlvParser();
                         BerTlvs tlvs = parserA.parse(selectPpseResponseOk, 0, selectPpseResponseOk.length);
@@ -158,6 +163,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             boolean berTagIsConstructed = berTag.isConstructed();
 
                         }
+
+                         */
 
                         /*
                         // devnied
@@ -186,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                          * step 2 code start
                          */
 
-                        writeToUiAppend("");
+                        //writeToUiAppend("");
                         printStepHeader(2, "search applications on card");
                         writeToUiAppend("02 analyze select PPSE response and search for tag 0x4F (applications on card)");
 
@@ -206,6 +213,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             aidList.add(tlv4fBytes);
                             writeToUiAppend("application Id (AID): " + bytesToHexNpe(tlv4fBytes));
                         }
+                        writeToUiAppend(etData, "02 analyze select PPSE response completed");
 
                         /**
                          * step 2 code end
@@ -227,14 +235,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             writeToUiAppend("03 select AID command  length " + selectAidCommand.length + " data: " + bytesToHexNpe(selectAidCommand));
                             writeToUiAppend("03 select AID response length " + selectAidResponse.length + " data: " + bytesToHexNpe(selectAidResponse));
                             writeToUiAppend(prettyPrintDataToString(selectAidResponse));
-
+                            writeToUiAppend(etData, "03 select AID completed");
                             //}
                             /**
                              * step 3 code end
                              */
 
                             // intermediate step - get single data from card, will be printed later
-                            writeToUiAppend("");
+                            //writeToUiAppend("");
                             writeToUiAppend("get single data elements");
                             byte[] applicationTransactionCounter = getApplicationTransactionCounter(nfc);
                             byte[] pinTryCounter = getPinTryCounter(nfc);
@@ -242,11 +250,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             byte[] logFormat = getLogFormat(nfc);
                             // print single data
                             writeToUiAppend(dumpSingleData(applicationTransactionCounter, pinTryCounter, lastOnlineATCRegister, logFormat));
-                            writeToUiAppend("");
 
-                            // todo remove code
+                            /*
+                            // does not work on my cards
                             byte[] challenge8Byte = getChallenge(nfc);
                             writeToUiAppend("challenge length: " + challenge8Byte.length + " data: " + bytesToHexNpe(challenge8Byte));
+
+                             */
 
 
                             /**
@@ -255,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                             byte[] selectAidResponseOk = checkResponse(selectAidResponse);
                             if (selectAidResponseOk != null) {
-                                writeToUiAppend("");
+                                //writeToUiAppend("");
                                 printStepHeader(4, "search for tag 0x9F38");
                                 writeToUiAppend("04 search for tag 0x9F38 in the selectAid response");
                                 /**
@@ -265,13 +275,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                  */
                                 BerTlvs tlvsAid = parser.parse(selectAidResponseOk);
                                 BerTlv tag9f38 = tlvsAid.find(new BerTag(0x9F, 0x38));
+                                writeToUiAppend(etData, "04 search for tag 0x9F38 in the selectAid response completed");
                                 byte[] gpoRequestCommand;
                                 if (tag9f38 != null) {
                                     /**
                                      * the following code is for VisaCards and (German) GiroCards as we found a PDOL
                                      */
                                     writeToUiAppend("");
-                                    writeToUiAppend("### processing the VisaCard and GiroCard path ###");
+                                    writeToUiAppend("### processing the America Express, VisaCard and GiroCard path ###");
                                     writeToUiAppend("");
                                     byte[] pdolValue = tag9f38.getBytesValue();
                                     /*
@@ -293,8 +304,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                                 "] length " + String.valueOf(pdolEntry.getLength()));
                                     }
 
-                                    // todo show contents from pdol request returned with tags (just a dump)
-                                    // take pdol + command, extract data
 
                                     gpoRequestCommand = getGpoFromPdol(pdolValue);
                                     //gpoRequestCommand = getGetProcessingOptionsFromPdol(pdolValue); // not working for DKB Visa
@@ -322,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     writeToUiAppend(pdolRequestString);
                                 }
 
-                                writeToUiAppend("");
+                                //writeToUiAppend("");
                                 printStepHeader(5, "get the processing options");
                                 writeToUiAppend("05 get the processing options  command length: " + gpoRequestCommand.length + " data: " + bytesToHexNpe(gpoRequestCommand));
 
@@ -340,6 +349,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                 byte[] gpoRequestResponse = nfc.transceive(gpoRequestCommand);
                                 byte[] gpoRequestResponseOk;
+                                writeToUiAppend(etData, "05 get the processing options completed");
                                 if (gpoRequestResponse != null) {
                                     writeToUiAppend("05 get the processing options response length: " + gpoRequestResponse.length + " data: " + bytesToHexNpe(gpoRequestResponse));
                                     gpoRequestResponseOk = checkResponse(gpoRequestResponse);
@@ -382,8 +392,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                 BerTlv tag57 = tlvsGpo.find(new BerTag(0x57));
                                 if (tag57 != null) {
-                                    writeToUiAppend("");
+                                    //writeToUiAppend("");
                                     writeToUiAppend("workflow a)");
+                                    writeToUiAppend("");
+                                    printStepHeader(6, "read files & search PAN");
+                                    writeToUiAppend("06 read the files from card skipped");
+                                    writeToUiAppend(etData, "06 read the files from card skipped");
+
                                     writeToUiAppend("the response contains a Track 2 Equivalent Data tag [tag 0x57]");
                                     byte[] gpoResponseTag57 = tag57.getBytesValue();
                                     writeToUiAppend("found tag 0x57 in the gpoResponse length: " + gpoResponseTag57.length + " data: " + bytesToHexNpe(gpoResponseTag57));
@@ -393,9 +408,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     writeToUiAppend("");
                                     printStepHeader(7, "print PAN & expire date");
                                     writeToUiAppend("07 get PAN and Expiration date from tag 0x57 (Track 2 Equivalent Data)");
-                                    writeToUiAppend("data for AID " + aidSelected);
+                                    writeToUiAppend(etData, "07 get PAN and Expiration date from tag 0x57 (Track 2 Equivalent Data) completed");
+                                    writeToUiAppend("data for AID " + bytesToHexNpe(aidSelected));
                                     writeToUiAppend("PAN: " + pan);
-                                    writeToUiAppend("Expiration date (YYMM): " + expDate);
+                                    String expirationDateString = "Expiration date (" + (expDate.length() == 4 ? "YYMM): " : "YYMMDD): ") + expDate;
+                                    writeToUiAppend(expirationDateString);
+                                    writeToUiAppend(etData, "data for AID " + bytesToHexNpe(aidSelected));
+                                    writeToUiAppend(etData,"PAN: " + pan);
+                                    writeToUiAppend(etData, expirationDateString);
                                     writeToUiAppend("");
                                 }
 
@@ -409,7 +429,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                 BerTlv tag80 = tlvsGpo.find(new BerTag(0x80));
                                 if (tag80 != null) {
-                                    writeToUiAppend("");
+                                    //writeToUiAppend("");
                                     writeToUiAppend("workflow b)");
                                     writeToUiAppend("the response is of type 'Response Message Template Format 1' [tag 0x80]");
                                     byte[] gpoResponseTag80 = tag80.getBytesValue();
@@ -427,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                 BerTlv tag77 = tlvsGpo.find(new BerTag(0x77));
                                 if (tag77 != null) {
-                                    writeToUiAppend("");
+                                    //writeToUiAppend("");
                                     writeToUiAppend("workflow c)");
                                     writeToUiAppend("the response is of type 'Response Message Template Format 2' [tag 0x77]");
                                     writeToUiAppend("found tag 0x77 in the gpoResponse");
@@ -442,6 +462,10 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                 writeToUiAppend("");
                                 writeToUiAppend("found this AFL data in the gpoResponse to read from: " + bytesToHexNpe(aflBytes));
+                                writeToUiAppend("");
+                                printStepHeader(6, "read files & search PAN");
+                                writeToUiAppend("06 read the files from card and search for PAN & Expiration date");
+                                writeToUiAppend(etData, "06 read the files from card and search for PAN & Expiration date");
 
                                 List<byte[]> tag94BytesList = divideArray(aflBytes, 4);
                                 int tag94BytesListLength = tag94BytesList.size();
@@ -513,10 +537,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                                     writeToUiAppend("");
                                                     printStepHeader(7, "print PAN & expire date");
                                                     writeToUiAppend("07 get PAN and Expiration date from tags 0x5a and 0x5f24");
+                                                    writeToUiAppend(etData, "07 get PAN and Expiration date from tags 0x5a and 0x5f24 completed");
                                                     writeToUiAppend("data for AID " + bytesToHexNpe(aidSelected));
                                                     writeToUiAppend("PAN: " + readRecordPanString);
-                                                    // todo yymmdd or yymm depending on length
-                                                    writeToUiAppend("Expiration date (YYMM): " + readRecordExpirationDateString);
+                                                    String expirationDateString = "Expiration date (" + (readRecordExpirationDateString.length() == 4 ? "YYMM): " : "YYMMDD): ") + readRecordExpirationDateString;
+                                                    writeToUiAppend(expirationDateString);
+                                                    writeToUiAppend(etData, "data for AID " + bytesToHexNpe(aidSelected));
+                                                    writeToUiAppend(etData,"PAN: " + readRecordPanString);
+                                                    writeToUiAppend(etData, expirationDateString);
                                                     writeToUiAppend("");
                                                 }
                                             } catch (RuntimeException e) {
@@ -563,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                              * step 4 code end
                              */
 
-
+                        writeToUiAppend(etData, lineSeparatorString);
                         } // for (int aidNumber = 0; aidNumber < tag4fList.size(); aidNumber++) {
 
                         /**
@@ -578,6 +606,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     }
 
                     printStepHeader(99, "our journey ends");
+                    writeToUiAppend(etData, "99 reading of the card completed");
                     vibrate();
 
 
@@ -1342,17 +1371,35 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         return output.length > 1 ? output[1] : output[0];
     }
 
-    private void clearData(final TextView textView) {
+    private void clearData() {
         runOnUiThread(() -> {
             outputString = "";
             exportString = "";
-            textView.setText("");
+            etData.setText("");
+            etLog.setText("");
         });
     }
 
     private void writeToUiAppend(String message) {
-        System.out.println(message);
+        //System.out.println(message);
         outputString = outputString + message + "\n";
+    }
+
+    private void writeToUiAppend(final TextView textView, String message) {
+        runOnUiThread(() -> {
+            if (TextUtils.isEmpty(textView.getText().toString())) {
+                if (textView == (TextView) etLog) {
+                } else {
+                    textView.setText(message);
+                }
+            } else {
+                String newString = textView.getText().toString() + "\n" + message;
+                if (textView == (TextView) etLog) {
+                } else {
+                    textView.setText(newString);
+                }
+            }
+        });
     }
 
     private void writeToUiFinal(final TextView textView) {
