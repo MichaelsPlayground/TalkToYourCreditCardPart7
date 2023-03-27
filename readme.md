@@ -36,6 +36,17 @@ build.gradle:
     implementation 'com.github.devnied.emvnfccard:library:3.0.1'
 ```
 
+These are the steps to read a payment card, it is a kind of "question & answer" workflow:
+- ask the card which applications are available on the card ("select PPSE")
+- analyze the card's response and identify one or more of the application number or application id ("AID")
+- select one application on the card to work with ("select AID") [or iterate through the applications  and run the following steps for each application]
+- analyze the card's response to find out what data the card needs to proceed (find the "processing options data object list" (PDOL))
+- analyze the card's response and get the content of the element "application file locator" (AFL) list
+- read all files given in the AFL list and find the file where there are the elements "Application Primary Account Number" and "Application Expiration Date"
+- print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
+
+
+
 In AndroidManifest.xml grant these permissions:
 ```plaintext
 

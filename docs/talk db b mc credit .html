@@ -1,0 +1,305 @@
+NFC tag discovered
+TagId: 3f8e95c9
+TechList found with these entries:
+android.nfc.tech.IsoDep
+android.nfc.tech.NfcA
+android.nfc.tech.NfcA
+android.nfc.tech.MifareClassic
+android.nfc.tech.NdefFormatable
+connection with card success
+
+*********************************
+************ step 00 ************
+* our journey begins            *
+*********************************
+increase IsoDep timeout for long reading
+timeout old: 2000 ms
+timeout new: 10000 ms
+
+*********************************
+************ step 01 ************
+* select PPSE                   *
+*********************************
+01 select PPSE command  length 20 data: 00a404000e325041592e5359532e444446303100
+01 select PPSE response length 39 data: 6f23840e325041592e5359532e4444463031a511bf0c0e610c4f07a00000000410108701019000
+------------------------------------
+6F 23 -- File Control Information (FCI) Template
+      84 0E -- Dedicated File (DF) Name
+            32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 (BINARY)
+      A5 11 -- File Control Information (FCI) Proprietary Template
+            BF 0C 0E -- File Control Information (FCI) Issuer Discretionary Data
+                     61 0C -- Application Template
+                           4F 07 -- Application Identifier (AID) - card
+                                 A0 00 00 00 04 10 10 (BINARY)
+                           87 01 -- Application Priority Indicator
+                                 01 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+
+*********************************
+************ step 02 ************
+* search applications on card   *
+*********************************
+02 analyze select PPSE response and search for tag 0x4F (applications on card)
+Found tag 0x4F 1 time:
+application Id (AID): a0000000041010
+
+
+*********************************
+************ step 03 ************
+* select application by AID     *
+*********************************
+03 select application by AID a0000000041010 (number 1)
+
+03 select AID command  length 13 data: 00a4040007a000000004101000
+03 select AID response length 45 data: 6f298407a0000000041010a51e500a4d4153544552434152448701015f2d046465656ebf0c059f4d020b0a9000
+------------------------------------
+6F 29 -- File Control Information (FCI) Template
+      84 07 -- Dedicated File (DF) Name
+            A0 00 00 00 04 10 10 (BINARY)
+      A5 1E -- File Control Information (FCI) Proprietary Template
+            50 0A -- Application Label
+                  4D 41 53 54 45 52 43 41 52 44 (=MASTERCARD)
+            87 01 -- Application Priority Indicator
+                  01 (BINARY)
+            5F 2D 04 -- Language Preference
+                     64 65 65 6E (=deen)
+            BF 0C 05 -- File Control Information (FCI) Issuer Discretionary Data
+                     9F 4D 02 -- Log Entry
+                              0B 0A (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+get single data elements
+single data retrieved from card
+-----------------------------------------------------
+applicationTransactionCounter: NULL
+-----------------------------------------------------
+pinTryCounter: 01
+-----------------------------------------------------
+lastOnlineATCRegister: NULL
+-----------------------------------------------------
+logFormat: 9f27019f02065f2a029a039f36029f5206
+-----------------------------------------------------
+
+
+*********************************
+************ step 04 ************
+* search for tag 0x9F38         *
+*********************************
+04 search for tag 0x9F38 in the selectAid response
+
+### processing the MasterCard path ###
+
+No PDOL found in the selectAid response, generating a 'null' PDOL
+
+The card is requesting 0 tags in the PDOL
+
+Tag  Tag Name                        Length Value
+-----------------------------------------------------
+     no PDOL provided, returning an empty command
+-----------------------------------------------------
+
+*********************************
+************ step 05 ************
+* get the processing options    *
+*********************************
+05 get the processing options  command length: 8 data: 80a8000002830000
+05 get the processing options response length: 26 data: 7716820219809410080101001001010118010200200102009000
+------------------------------------
+77 16 -- Response Message Template Format 2
+      82 02 -- Application Interchange Profile
+            19 80 (BINARY)
+      94 10 -- Application File Locator (AFL)
+            08 01 01 00 10 01 01 01 18 01 02 00 20 01 02 00 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+workflow c)
+the response is of type 'Response Message Template Format 2' [tag 0x77]
+found tag 0x77 in the gpoResponse
+found 'AFL' [tag 0x94] in the response of type 'Response Message Template Format 2' [tag 0x77]
+found tag 0x94 in the gpoResponse length: 16 data: 08010100100101011801020020010200
+
+found this AFL data in the gpoResponse to read from: 08010100100101011801020020010200
+
+
+*********************************
+************ step 06 ************
+* read files & search PAN       *
+*********************************
+06 read the files from card and search for PAN & Expiration date
+
+The AFL contains 4 entries to read
+for SFI 8 we read 1 record
+readRecord  command length: 5 data: 00b2010c00
+readRecord response length: 121 data: 70759f6c0200019f620600000000000e9f63060000000007f09f640104563442353437323638363533343935383033325e202f5e323030323230313135313530303030303030303030303030303030303030309f660207f09f6b135472686534958032d20022011500000000000f9f6502000e9f6701049000
+------------------------------------
+70 75 -- Record Template (EMV Proprietary)
+      9F 6C 02 -- Mag Stripe Application Version Number (Card)
+               00 01 (BINARY)
+      9F 62 06 -- Track 1 bit map for CVC3
+               00 00 00 00 00 0E (BINARY)
+      9F 63 06 -- Track 1 bit map for UN and ATC
+               00 00 00 00 07 F0 (BINARY)
+      9F 64 01 -- Track 1 number of ATC digits
+               04 (BINARY)
+      56 34 -- Track 1 Data
+            42 35 34 37 32 36 38 36 35 33 34 39 35 38 30 33
+            32 5E 20 2F 5E 32 30 30 32 32 30 31 31 35 31 35
+            30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30
+            30 30 30 30 (BINARY)
+      9F 66 02 -- Terminal Transaction Qualifiers
+               07 F0 (BINARY)
+      9F 6B 13 -- Track 2 Data
+               54 72 68 65 34 95 80 32 D2 00 22 01 15 00 00 00
+               00 00 0F (BINARY)
+      9F 65 02 -- Track 2 bit map for CVC3
+               00 0E (BINARY)
+      9F 67 01 -- Track 2 number of ATC digits
+               04 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+for SFI 10 we read 1 record
+readRecord  command length: 5 data: 00b2011400
+readRecord response length: 165 data: 7081a057135472686534958032d20022011515010100000f5a0854726865349580325f24032002295f25031602015f280202805f3401008c219f02069f03069f1a0295055f2a029a039c019f37049f35019f45029f4c089f34038d0c910a8a0295059f37049f4c088e0e00000000000000001e0342031f039f0702ff009f080200029f0d05b4508400009f0e0500000000009f0f05b4708480009f420209789f4a01829000
+------------------------------------
+70 81 A0 -- Record Template (EMV Proprietary)
+         57 13 -- Track 2 Equivalent Data
+               54 72 68 65 34 95 80 32 D2 00 22 01 15 15 01 01
+               00 00 0F (BINARY)
+         5A 08 -- Application Primary Account Number (PAN)
+               54 72 68 65 34 95 80 32 (NUMERIC)
+         5F 24 03 -- Application Expiration Date
+                  20 02 29 (NUMERIC)
+         5F 25 03 -- Application Effective Date
+                  16 02 01 (NUMERIC)
+         5F 28 02 -- Issuer Country Code
+                  02 80 (NUMERIC)
+         5F 34 01 -- Application Primary Account Number (PAN) Sequence Number
+                  00 (NUMERIC)
+         8C 21 -- Card Risk Management Data Object List 1 (CDOL1)
+               9F 02 06 -- Amount, Authorised (Numeric)
+               9F 03 06 -- Amount, Other (Numeric)
+               9F 1A 02 -- Terminal Country Code
+               95 05 -- Terminal Verification Results (TVR)
+               5F 2A 02 -- Transaction Currency Code
+               9A 03 -- Transaction Date
+               9C 01 -- Transaction Type
+               9F 37 04 -- Unpredictable Number
+               9F 35 01 -- Terminal Type
+               9F 45 02 -- Data Authentication Code
+               9F 4C 08 -- ICC Dynamic Number
+               9F 34 03 -- Cardholder Verification (CVM) Results
+         8D 0C -- Card Risk Management Data Object List 2 (CDOL2)
+               91 0a -- Issuer Authentication Data
+               8A 02 -- Authorisation Response Code
+               95 05 -- Terminal Verification Results (TVR)
+               9F 37 04 -- Unpredictable Number
+               9F 4C 08 -- ICC Dynamic Number
+         8E 0E -- Cardholder Verification Method (CVM) List
+               00 00 00 00 00 00 00 00 1E 03 42 03 1F 03 (BINARY)
+         9F 07 02 -- Application Usage Control
+                  FF 00 (BINARY)
+         9F 08 02 -- Application Version Number - card
+                  00 02 (BINARY)
+         9F 0D 05 -- Issuer Action Code - Default
+                  B4 50 84 00 00 (BINARY)
+         9F 0E 05 -- Issuer Action Code - Denial
+                  00 00 00 00 00 (BINARY)
+         9F 0F 05 -- Issuer Action Code - Online
+                  B4 70 84 80 00 (BINARY)
+         9F 42 02 -- Application Currency Code
+                  09 78 (NUMERIC)
+         9F 4A 01 -- Static Data Authentication Tag List
+                  82 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+found tag 0x5a in the readRecordResponse length: 8 data: 5472686534958032
+found tag 0x5f24 in the readRecordResponse length: 3 data: 200229
+
+
+*********************************
+************ step 07 ************
+* print PAN & expire date       *
+*********************************
+07 get PAN and Expiration date from tags 0x5a and 0x5f24
+data for AID a0000000041010
+PAN: 5472686534958032
+Expiration date (YYMMDD): 200229
+
+for SFI 18 we read 2 records
+readRecord  command length: 5 data: 00b2011c00
+readRecord response length: 229 data: 7081e08f01059f32010392246725a0ce7472f9bf746107f35fa55b1ce8fa53214f716b150bb252f23925c88ed746177d9081b0a8ed6b8e91ac7a31fb875e578ee3e20b92004fa69e43631edfe307fc5d841eeebb8056ea3470b0f8dbb869a9df37107a3eaa4cb1a1e55831fed9e1ea5b52b1cb9e3d345fb9a8c67b78c95faadf14965b0388278ad68c3a5955f359327bf363c26fae7a2d143601852605db0ca912d23569a7f6ddf91b1c4a489b3339e1392405038704261dd3bfe62fef67081c26004039aad2bf30cadcc2bc56f67da93b5a22504b753faeb3aa311e140a1237537e189000
+------------------------------------
+70 81 E0 -- Record Template (EMV Proprietary)
+         8F 01 -- Certification Authority Public Key Index - card
+               05 (BINARY)
+         9F 32 01 -- Issuer Public Key Exponent
+                  03 (BINARY)
+         92 24 -- Issuer Public Key Remainder
+               67 25 A0 CE 74 72 F9 BF 74 61 07 F3 5F A5 5B 1C
+               E8 FA 53 21 4F 71 6B 15 0B B2 52 F2 39 25 C8 8E
+               D7 46 17 7D (BINARY)
+         90 81 B0 -- Issuer Public Key Certificate
+                  A8 ED 6B 8E 91 AC 7A 31 FB 87 5E 57 8E E3 E2 0B
+                  92 00 4F A6 9E 43 63 1E DF E3 07 FC 5D 84 1E EE
+                  BB 80 56 EA 34 70 B0 F8 DB B8 69 A9 DF 37 10 7A
+                  3E AA 4C B1 A1 E5 58 31 FE D9 E1 EA 5B 52 B1 CB
+                  9E 3D 34 5F B9 A8 C6 7B 78 C9 5F AA DF 14 96 5B
+                  03 88 27 8A D6 8C 3A 59 55 F3 59 32 7B F3 63 C2
+                  6F AE 7A 2D 14 36 01 85 26 05 DB 0C A9 12 D2 35
+                  69 A7 F6 DD F9 1B 1C 4A 48 9B 33 39 E1 39 24 05
+                  03 87 04 26 1D D3 BF E6 2F EF 67 08 1C 26 00 40
+                  39 AA D2 BF 30 CA DC C2 BC 56 F6 7D A9 3B 5A 22
+                  50 4B 75 3F AE B3 AA 31 1E 14 0A 12 37 53 7E 18 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+readRecord  command length: 5 data: 00b2021c00
+readRecord response length: 7 data: 70039301ff9000
+------------------------------------
+70 03 -- Record Template (EMV Proprietary)
+      93 01 -- Signed Static Application Data
+            FF (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+for SFI 20 we read 2 records
+readRecord  command length: 5 data: 00b2012400
+readRecord response length: 8 data: 70049f4701039000
+------------------------------------
+70 04 -- Record Template (EMV Proprietary)
+      9F 47 01 -- ICC Public Key Exponent
+               03 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+readRecord  command length: 5 data: 00b2022400
+readRecord response length: 185 data: 7081b49f4681b03c7d97dfbe4c194ce43014102c1afb2ab779f69a6a0da69827e6d234d585ab849695e1c4d53920ba9c8b2984c2bd2ed0f312f023a7405c9626d44669aad72252a89c932353e432f7c4af03ac45349c18824849f4268556bf592b98b5b5d4c6ccb6a2d4db1e06a0fc61d547155937e48688b256a28b8398b0bb45399e01d651ca2fe1cc508d07cd070aed42fe531f349ea8d1ffe1f7807808615cd96d014821d3700fc46015febb38b6274dff6e6aef3d9000
+------------------------------------
+70 81 B4 -- Record Template (EMV Proprietary)
+         9F 46 81 B0 -- ICC Public Key Certificate
+                     3C 7D 97 DF BE 4C 19 4C E4 30 14 10 2C 1A FB 2A
+                     B7 79 F6 9A 6A 0D A6 98 27 E6 D2 34 D5 85 AB 84
+                     96 95 E1 C4 D5 39 20 BA 9C 8B 29 84 C2 BD 2E D0
+                     F3 12 F0 23 A7 40 5C 96 26 D4 46 69 AA D7 22 52
+                     A8 9C 93 23 53 E4 32 F7 C4 AF 03 AC 45 34 9C 18
+                     82 48 49 F4 26 85 56 BF 59 2B 98 B5 B5 D4 C6 CC
+                     B6 A2 D4 DB 1E 06 A0 FC 61 D5 47 15 59 37 E4 86
+                     88 B2 56 A2 8B 83 98 B0 BB 45 39 9E 01 D6 51 CA
+                     2F E1 CC 50 8D 07 CD 07 0A ED 42 FE 53 1F 34 9E
+                     A8 D1 FF E1 F7 80 78 08 61 5C D9 6D 01 48 21 D3
+                     70 0F C4 60 15 FE BB 38 B6 27 4D FF 6E 6A EF 3D (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+
+*********************************
+
+*********************************
+************ step 99 ************
+* our journey ends              *
+*********************************
