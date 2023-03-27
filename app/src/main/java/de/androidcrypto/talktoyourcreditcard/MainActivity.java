@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                         BerTlvParser parser = new BerTlvParser();
                         BerTlvs tlv4Fs = parser.parse(selectPpseResponseOk);
-                        // by searching for tag 4f
+                        // find all entries for tag 0x4f
                         List<BerTlv> tag4fList = tlv4Fs.findAll(new BerTag(0x4F));
                         if (tag4fList.size() < 1) {
                             writeToUiAppend("there is no tag 0x4F available, stopping here");
