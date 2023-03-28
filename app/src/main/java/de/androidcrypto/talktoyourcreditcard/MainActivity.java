@@ -148,47 +148,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                          * step 1 code end
                          */
 
-                        /*
-                        // get the tags from respond
-                        BerTlvParser parserA = new BerTlvParser();
-                        BerTlvs tlvs = parserA.parse(selectPpseResponseOk, 0, selectPpseResponseOk.length);
-                        List<BerTlv> selectPpseResponseTagList = tlvs.getList();
-                        int selectPpseResponseTagListSize = selectPpseResponseTagList.size();
-                        writeToUiAppend("found " + selectPpseResponseTagListSize + " tags in response");
-                        // show iterating
-                        for (int i = 0; i < selectPpseResponseTagListSize; i++) {
-                            BerTlv tlv = selectPpseResponseTagList.get(i);
-                            writeToUiAppend(tlv.toString());
-                            BerTag berTag = tlv.getTag();
-                            boolean berTagIsConstructed = berTag.isConstructed();
-
-                        }
-
-                         */
-
-                        /*
-                        // devnied
-                        writeToUiAppend("");
-                        List<TagAndLength> parsedList = TlvUtil.parseTagAndLength(selectPpseResponseOk);
-                        int parsedListSize = parsedList.size();
-                        writeToUiAppend("parsedListSize: " + parsedListSize);
-                        writeToUiAppend(parsedList.toString());
-*/
-                        /*
-                        // this is working
-                        writeToUiAppend("");
-                        writeToUiAppend("using TagListParser");
-                        List<TagNameValue> parsedList = TagListParser.parseRespond(selectPpseResponseOk);
-                        int parsedListSize = parsedList.size();
-                        writeToUiAppend("parsedListSize: " + parsedListSize);
-                        for (int i = 0; i < parsedListSize; i++) {
-                            TagNameValue p = parsedList.get(i);
-                            writeToUiAppend("tag " + i + " : " + bytesToHexNpe(p.getTagBytes()) + " has the value " + bytesToHexNpe(p.getTagValueBytes()));
-                            writeToUiAppend("tag " + i + " : " + bytesToHexNpe(p.getTagBytes()) + " has the name " + p.getTagName());
-                        }
-
-                         */
-
                         /**
                          * step 2 code start
                          */
@@ -315,7 +274,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     //gpoRequestCommand = getGetProcessingOptionsFromPdol(pdolValue); // not working for DKB Visa
                                     */
                                     writeToUiAppend("found tag 0x9F38 (PDOL) in the selectAid with this length: " + pdolValue.length + " data: " + bytesToHexNpe(pdolValue));
-                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(pdolValue, 0);
+                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(pdolValue, new byte[]{(byte) 0x00}); // 00 = default, maximum 03
+
                                     gpoRequestCommand = gpoRequestCommandArray[0];
                                     String pdolRequestString = new String(gpoRequestCommandArray[1], StandardCharsets.UTF_8);
                                     writeToUiAppend("");
@@ -330,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                                     writeToUiAppend("No PDOL found in the selectAid response, generating a 'null' PDOL");
                                     //gpoRequestCommand = getGpoFromPdol(new byte[0]); // empty PDOL
-                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(new byte[0], 0);
+                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(new byte[0], new byte[]{(byte) 0x00});
                                     gpoRequestCommand = gpoRequestCommandArray[0];
                                     String pdolRequestString = new String(gpoRequestCommandArray[1], StandardCharsets.UTF_8);
                                     writeToUiAppend("");
@@ -364,9 +324,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                     }
                                 }
                                 // todo check for null value when gpo response is null due to wrong command
-
-                                // todo: if a (Visa-) card doesn't like the gpoRequest we should try with another 'Terminal Transaction Qualifiers' value,
-                                // todo: e.q. 'A0 00 00 00' or 'B7 60 40 00' instead of '27 00 00 00'
 
                                 /**
                                  * step 5 code end
@@ -693,12 +650,12 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
      * construct the getProcessingOptions command using the provided pdol
      * the default ttq is null, but another ttq can used if default ttq gives no result for later sending
      * @param pdol
-     * @param ttq
+     * @param alternativeTtq
      * @return a byte[][] array
      * [0] = getProcessingOptions command
      * [1] = text table with requested tags from pdol with length and value
      */
-    private byte[][] getGpoFromPdolExtended(@NonNull byte[] pdol, int ttq) {
+    private byte[][] getGpoFromPdolExtended(@NonNull byte[] pdol, byte[] alternativeTtq) {
         // todo implement alternative ttq
 
         byte[][] result = new byte[2][];
@@ -736,27 +693,27 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             String nameOfTag = tal.getTag().getName();
             valueOfTagSum += tal.getLength(); // add it to the sum
             // now we are trying to find a default value
-            byte[] defaultValue = dolValues.getDolValue(tagToSearch);
+            byte[] defaultValue = dolValues.getDolValue(tagToSearch, alternativeTtq);
             byte[] usedValue = new byte[0];
             if (defaultValue != null) {
                 if (defaultValue.length > lengthOfTag) {
                     // cut it to correct length
                     usedValue = Arrays.copyOfRange(defaultValue, 0, lengthOfTag);
-                    Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too long, cut to: " + bytesToHexNpe(usedValue));
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too long, cut to: " + bytesToHexNpe(usedValue));
                 } else if (defaultValue.length < lengthOfTag) {
                     // increase length
                     usedValue = new byte[lengthOfTag];
                     System.arraycopy(defaultValue, 0, usedValue, 0, defaultValue.length);
-                    Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too short, increased to: " + bytesToHexNpe(usedValue));
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too short, increased to: " + bytesToHexNpe(usedValue));
                 } else {
                     // correct length
                     usedValue = defaultValue.clone();
-                    Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default found: " + bytesToHexNpe(usedValue));
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default found: " + bytesToHexNpe(usedValue));
                 }
             } else {
                 // defaultValue is null means the tag was not found in our tags database for default values
                 usedValue = new byte[lengthOfTag];
-                Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " NO default found, generate zeroed: " + bytesToHexNpe(usedValue));
+                //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " NO default found, generate zeroed: " + bytesToHexNpe(usedValue));
             }
             // now usedValue does have the correct length
             sb.append(bytesToHexNpe(usedValue));
@@ -770,7 +727,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         result[0] = hexToBytes(constructedGpoCommandString);
         result[1] = returnString.toString().getBytes(StandardCharsets.UTF_8);
         return result;
-        //return hexToBytes(constructedGpoCommandString);
     }
 
     /**
@@ -849,22 +805,10 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         try {
             result = nfc.transceive(cmd);
         } catch (IOException e) {
-            Log.e(TAG, "* getApplicationTransactionCounter failed");
+            Log.e(TAG, "* getChallenge failed");
             return null;
         }
         return result;
-        /*
-        //System.out.println("*** getATC: " + bytesToHexNpe(result));
-        // e.g. visa returns 9f360200459000
-        // e.g. visa returns 9f36020045 9000
-        byte[] resultOk = checkResponse(result);
-        if (resultOk == null) {
-            return null;
-        } else {
-            return getTagValueFromResult(resultOk, (byte) 0x9f, (byte) 0x36);
-        }
-
-         */
     }
 
     // Get the data of ATC(Application Transaction Counter, tag '9F36')), template 77 or 80
@@ -940,7 +884,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     }
 
     /**
-     * gets the byte value of a tag from transceive response
+     * gets the byte value of a tag from a transceive response
      *
      * @param data
      * @param search
@@ -1447,8 +1391,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         intent.setType("*/*");
         // Optionally, specify a URI for the file that should appear in the
         // system file picker when it loads.
-        //boolean pickerInitialUri = false;
-        //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
+        // boolean pickerInitialUri = false;
+        // intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
         // get filename from edittext
         String filename = exportStringFileName;
         // sanity check
