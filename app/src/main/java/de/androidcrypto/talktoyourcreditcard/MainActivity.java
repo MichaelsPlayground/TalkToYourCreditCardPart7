@@ -467,8 +467,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                 }
 
                                 writeToUiAppend("");
-                                writeToUiAppend("found this AFL data in the gpoResponse to read from: " + bytesToHexNpe(aflBytes));
-                                writeToUiAppend("");
                                 printStepHeader(6, "read files & search PAN");
                                 writeToUiAppend("06 read the files from card and search for PAN & Expiration date");
                                 writeToUiAppend(etData, "06 read the files from card and search for PAN & Expiration date");
