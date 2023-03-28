@@ -112,6 +112,21 @@ CDOL1 MC
         return null; // default, entry not found
     }
 
+    public String dump() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("List of predefined tag and values for PDOL and CDOL").append("\n");
+        sb.append("Tag  Name                            Value").append("\n");
+        sb.append("-------------------------------------------------").append("\n");
+        for (int i = 0; i < dolList.size(); i++) {
+            DolTag dol = dolList.get(i);
+            sb.append(trimStringRight(bytesToHexNpe(dol.getTag()), 5));
+            sb.append(trimStringRight(dol.getTagName(), 32));
+            sb.append(bytesToHexNpe(dol.getDefaultValue()));
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
     private DolTag setTag(byte[] tagByte, String tagName, byte[] tagValueByte) {
         DolTag dolTag = new DolTag(tagByte, tagName, tagValueByte);
         dolList.add(dolTag);
@@ -127,4 +142,40 @@ CDOL1 MC
         }
         return bytes;
     }
+
+    /**
+     * add blanks to a string on right side up to a length of len
+     * if the data.length >= len one character is deleted to get minimum one blank
+     * @param data
+     * @param len
+     * @return
+     */
+    private String trimStringRight(String data, int len) {
+        if (data.length() >= len) {
+            data = data.substring(0, (len - 1));
+        }
+        while (data.length() < len) {
+            data = data + " ";
+        }
+        return data;
+    }
+
+    /**
+     * converts a byte array to a hex encoded string
+     * This method is Null Pointer Exception (NPE) safe
+     *
+     * @param bytes
+     * @return hex encoded string
+     */
+    public static String bytesToHexNpe(byte[] bytes) {
+        if (bytes != null) {
+            StringBuffer result = new StringBuffer();
+            for (byte b : bytes)
+                result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+            return result.toString();
+        } else {
+            return "";
+        }
+    }
+
 }

@@ -277,6 +277,12 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                 BerTlv tag9f38 = tlvsAid.find(new BerTag(0x9F, 0x38));
                                 writeToUiAppend(etData, "04 search for tag 0x9F38 in the selectAid response completed");
                                 byte[] gpoRequestCommand;
+
+                                // comment this out for regular workflow
+                                DolValues dolValues = new DolValues();
+                                writeToUiAppend("Available predefined values for PDOL and CDOL");
+                                writeToUiAppend(dolValues.dump());
+
                                 if (tag9f38 != null) {
                                     /**
                                      * the following code is for VisaCards and (German) GiroCards as we found a PDOL
@@ -695,11 +701,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
      * [1] = text table with requested tags from pdol with length and value
      */
     private byte[][] getGpoFromPdolExtended(@NonNull byte[] pdol, int ttq) {
-
         // todo implement alternative ttq
 
         byte[][] result = new byte[2][];
-
         // get the tags in a list
         List<com.github.devnied.emvnfccard.iso7816emv.TagAndLength> tagAndLength = TlvUtil.parseTagAndLength(pdol);
         int tagAndLengthSize = tagAndLength.size();

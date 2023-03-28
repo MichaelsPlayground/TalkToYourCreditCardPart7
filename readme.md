@@ -46,6 +46,15 @@ These are the steps to read a payment card, it is a kind of "question & answer" 
 - print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
 
 
+Amexco gpo command:
+```plaintext
+------------------------------------
+80 12 -- Response Message Template Format 1
+      18 00 08 01 01 00 08 03 03 00 08 05 05 00 10 02
+      02 00 (BINARY)
+90 00 -- Command successfully executed (OK)
+------------------------------------
+```
 
 In AndroidManifest.xml grant these permissions:
 ```plaintext
