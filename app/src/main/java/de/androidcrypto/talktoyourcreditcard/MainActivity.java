@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
@@ -43,6 +44,7 @@ import com.payneteasy.tlv.BerTlvParser;
 import com.payneteasy.tlv.BerTlvs;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigInteger;
@@ -1267,9 +1269,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         Downloads:	366
         Licence:	Intended exclusively for private use
          */
-        MediaPlayer mp = MediaPlayer.create(this, R.raw.ping_ringtone);
+        //MediaPlayer mp = MediaPlayer.create(this, R.raw.ping_ringtone);
+
+
+        MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_01);
         mp.start();
     }
+
+
 
 
     /**
@@ -1344,7 +1351,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     textView.setText(newString);
                 }
             }
-            Log.d(TAG, message);
         });
     }
 
