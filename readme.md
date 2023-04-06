@@ -46,6 +46,33 @@ These are the steps to read a payment card, it is a kind of "question & answer" 
 - print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
 
 
+## Sound resources for pings: https://m2.material.io/design/sound/sound-resources.html
+
+Licensed under Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/legalcode
+
+## Library ber-tlv
+
+Source code: https://github.com/evsinev/ber-tlv
+
+License:  Apache-2.0 license
+
+## Library: EMV-NFC-Paycard-Enrollment
+
+Source code: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
+
+License: Apache-2.0 license
+
+
+```plaintext
+You are free to:
+Share — copy and redistribute the material in any medium or format
+Adapt — remix, transform, and build upon the material
+for any purpose, even commercially.
+This license is acceptable for Free Cultural Works.
+The licensor cannot revoke these freedoms as long as you follow the license terms.
+```
+
+
 Amexco gpo command:
 ```plaintext
 ------------------------------------
@@ -59,4 +86,15 @@ Amexco gpo command:
 In AndroidManifest.xml grant these permissions:
 ```plaintext
 
+```
+
+Dependencies in build.gradle (app):
+```plaintext
+    // parsing BER-TLV encoded data, e.g. a credit card
+    // source: https://github.com/evsinev/ber-tlv
+    implementation 'com.payneteasy:ber-tlv:1.0-11'
+
+    // pretty printing of card's responses
+    // source: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
+    implementation 'com.github.devnied.emvnfccard:library:3.0.1'
 ```

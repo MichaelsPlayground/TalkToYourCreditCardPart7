@@ -12,4 +12,9 @@
         android:title="Export text File"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_licenses"
+        android:title="Licenses"
+        app:showAsAction="never"/>
+
 </menu>

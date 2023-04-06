@@ -17,9 +17,11 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1240,6 +1242,21 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     }
 
     /**
+     * Sound files downloaded from Material Design Sounds
+     * https://m2.material.io/design/sound/sound-resources.html
+     *
+     */
+    private void playSinglePing() {
+        MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_02);
+        mp.start();
+    }
+
+    private void playDoublePing() {
+        MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_01);
+        mp.start();
+    }
+
+    /**
      * play a sound when reading is done
      */
     private void playPing() {
@@ -1449,6 +1466,19 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
     }
 
+    // run: displayLicensesAlertDialog();
+    // display licenses dialog see: https://bignerdranch.com/blog/open-source-licenses-and-android/
+    private void displayLicensesAlertDialog() {
+        WebView view = (WebView) LayoutInflater.from(this).inflate(R.layout.dialog_licenses, null);
+        view.loadUrl("file:///android_asset/open_source_licenses.html");
+        android.app.AlertDialog mAlertDialog = new android.app.AlertDialog.Builder(MainActivity.this).create();
+        mAlertDialog = new android.app.AlertDialog.Builder(this, R.style.Theme_TalkToYourCreditCard)
+                .setTitle(getString(R.string.action_licenses))
+                .setView(view)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
     /**
      * section for OptionsMenu
      */
@@ -1478,6 +1508,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             public boolean onMenuItemClick(MenuItem item) {
                 Log.i(TAG, "mExportTextFile");
                 exportTextFile();
+                return false;
+            }
+        });
+
+        MenuItem mLicenses = menu.findItem(R.id.action_licenses);
+        mLicenses.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Log.i(TAG, "mELicenses");
+                displayLicensesAlertDialog();
                 return false;
             }
         });
