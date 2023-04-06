@@ -34,7 +34,6 @@ import androidx.appcompat.widget.Toolbar;
 import com.github.devnied.emvnfccard.enums.CommandEnum;
 import com.github.devnied.emvnfccard.exception.CommunicationException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.iso7816emv.impl.DefaultTerminalImpl;
 import com.github.devnied.emvnfccard.utils.CommandApdu;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
@@ -247,7 +246,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                      * the following code is for VisaCards and (German) GiroCards as we found a PDOL
                                      */
                                     writeToUiAppend("");
-                                    writeToUiAppend("### processing the America Express, VisaCard and GiroCard path ###");
+                                    writeToUiAppend("### processing the American Express, VisaCard and GiroCard path ###");
                                     writeToUiAppend("");
                                     byte[] pdolValue = tag9f38.getBytesValue();
                                     /*
@@ -1345,6 +1344,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     textView.setText(newString);
                 }
             }
+            Log.d(TAG, message);
         });
     }
 
