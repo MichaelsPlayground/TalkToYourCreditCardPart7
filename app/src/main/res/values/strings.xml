@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">TalkToYourCreditCard</string>
-    <string name="action_licenses">Verwendete Bibliotheken und Lizenzen</string>
+    <string name="action_licenses">Used libraries and their licenses</string>
 </resources>
