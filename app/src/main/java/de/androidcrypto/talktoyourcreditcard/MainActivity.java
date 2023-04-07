@@ -200,13 +200,83 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             writeToUiAppend("03 select AID response length " + selectAidResponse.length + " data: " + bytesToHexNpe(selectAidResponse));
                             writeToUiAppend(prettyPrintDataToString(selectAidResponse));
                             writeToUiAppend(etData, "03 select AID completed");
-                            //}
+
+                            /**
+                             * step 4 code start
+                             */
+
+                            byte[] selectAidResponseOk = checkResponse(selectAidResponse);
+                            if (selectAidResponseOk != null) {
+                                //writeToUiAppend("");
+                                printStepHeader(4, "search for tag 0x9F38");
+                                writeToUiAppend("04 search for tag 0x9F38 in the selectAid response");
+                                /**
+                                 * note: different behaviour between VisaCard, Mastercard and German GiroCards
+                                 * Mastercard has NO PDOL, Visa gives PDOL in tag 9F38
+                                 * next step: search for tag 9F38 Processing Options Data Object List (PDOL)
+                                 */
+                                BerTlvs tlvsAid = parser.parse(selectAidResponseOk);
+                                BerTlv tag9f38 = tlvsAid.find(new BerTag(0x9F, 0x38));
+                                writeToUiAppend(etData, "04 search for tag 0x9F38 in the selectAid response completed");
+                                byte[] gpoRequestCommand;
+
+                                // comment this out for regular workflow
+                                DolValues dolValues = new DolValues();
+                                writeToUiAppend("Available predefined values for PDOL and CDOL");
+                                writeToUiAppend(dolValues.dump());
+
+                                if (tag9f38 != null) {
+                                    /**
+                                     * the following code is for VisaCards and (German) GiroCards as we found a PDOL
+                                     */
+                                    writeToUiAppend("");
+                                    writeToUiAppend("### processing the American Express, VisaCard and GiroCard path ###");
+                                    writeToUiAppend("");
+                                    byte[] pdolValue = tag9f38.getBytesValue();
+
+                                    writeToUiAppend("found tag 0x9F38 (PDOL) in the selectAid with this length: " + pdolValue.length + " data: " + bytesToHexNpe(pdolValue));
+                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(pdolValue, new byte[]{(byte) 0x00}); // 00 = default, maximum 03
+
+                                    gpoRequestCommand = gpoRequestCommandArray[0];
+                                    String pdolRequestString = new String(gpoRequestCommandArray[1], StandardCharsets.UTF_8);
+                                    writeToUiAppend("");
+                                    writeToUiAppend(pdolRequestString);
+                                } else { // if (tag9f38 != null) {
+                                    /**
+                                     * MasterCard code
+                                     */
+                                    writeToUiAppend("");
+                                    writeToUiAppend("### processing the MasterCard path ###");
+                                    writeToUiAppend("");
+
+                                    writeToUiAppend("No PDOL found in the selectAid response, generating a 'null' PDOL");
+                                    //gpoRequestCommand = getGpoFromPdol(new byte[0]); // empty PDOL
+                                    byte[][] gpoRequestCommandArray = getGpoFromPdolExtended(new byte[0], new byte[]{(byte) 0x00});
+                                    gpoRequestCommand = gpoRequestCommandArray[0];
+                                    String pdolRequestString = new String(gpoRequestCommandArray[1], StandardCharsets.UTF_8);
+                                    writeToUiAppend("");
+                                    writeToUiAppend(pdolRequestString);
+                                }
+
+                                //writeToUiAppend("");
+                                printStepHeader(5, "get the processing options");
+                                writeToUiAppend("05 get the processing options  command length: " + gpoRequestCommand.length + " data: " + bytesToHexNpe(gpoRequestCommand));
+
+                            } else { // if (selectAidResponseOk != null) {
+                                writeToUiAppend("the selecting AID command failed");
+                            }
+
+                            /**
+                             * step 4 code end
+                             */
 
                         } // for (int aidNumber = 0; aidNumber < tag4fList.size(); aidNumber++) {
 
                         /**
                          * step 3 code end
                          */
+
+
 
                     } else {
                         // if (isoDepInTechList) {
@@ -268,6 +338,98 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     /**
      * step 1 code end
      */
+
+    /**
+     * step 4 code start
+     */
+
+    /**
+     * construct the getProcessingOptions command using the provided pdol
+     * the default ttq is null, but another ttq can used if default ttq gives no result for later sending
+     * @param pdol
+     * @param alternativeTtq
+     * @return a byte[][] array
+     * [0] = getProcessingOptions command
+     * [1] = text table with requested tags from pdol with length and value
+     */
+    private byte[][] getGpoFromPdolExtended(@NonNull byte[] pdol, byte[] alternativeTtq) {
+        // todo implement alternative ttq
+
+        byte[][] result = new byte[2][];
+        // get the tags in a list
+        List<com.github.devnied.emvnfccard.iso7816emv.TagAndLength> tagAndLength = TlvUtil.parseTagAndLength(pdol);
+        int tagAndLengthSize = tagAndLength.size();
+        StringBuilder returnString = new StringBuilder();
+        returnString.append("The card is requesting " + tagAndLengthSize + (tagAndLengthSize == 1 ? " tag" : " tags")).append(" in the PDOL").append("\n");
+        returnString.append("\n");
+        returnString.append("Tag  Tag Name                        Length Value").append("\n");
+        returnString.append("-----------------------------------------------------").append("\n");
+        if (tagAndLengthSize < 1) {
+            returnString.append("     no PDOL provided, returning an empty command").append("\n");
+            returnString.append("-----------------------------------------------------");
+            // there are no pdols in the list
+            //Log.e(TAG, "there are no PDOLs in the pdol array, aborted");
+            //return null;
+            // returning an empty PDOL
+            String tagLength2d = "00"; // length value
+            String tagLength2dAnd2 = "02"; // length value + 2
+            String constructedGpoCommandString = "80A80000" + tagLength2dAnd2 + "83" + tagLength2d + "" + "00";
+            result[0] = hexToBytes(constructedGpoCommandString);
+            result[1] = returnString.toString().getBytes(StandardCharsets.UTF_8);
+            return result;
+            //return hexToBytes(constructedGpoCommandString);
+        }
+        int valueOfTagSum = 0; // total length
+        StringBuilder sb = new StringBuilder(); // takes the default values of the tags
+        DolValues dolValues = new DolValues();
+        for (int i = 0; i < tagAndLengthSize; i++) {
+            // get a single tag
+            com.github.devnied.emvnfccard.iso7816emv.TagAndLength tal = tagAndLength.get(i); // eg 9f3704
+            byte[] tagToSearch = tal.getTag().getTagBytes(); // gives the tag 9f37
+            int lengthOfTag = tal.getLength(); // 4
+            String nameOfTag = tal.getTag().getName();
+            valueOfTagSum += tal.getLength(); // add it to the sum
+            // now we are trying to find a default value
+            byte[] defaultValue = dolValues.getDolValue(tagToSearch, alternativeTtq);
+            byte[] usedValue = new byte[0];
+            if (defaultValue != null) {
+                if (defaultValue.length > lengthOfTag) {
+                    // cut it to correct length
+                    usedValue = Arrays.copyOfRange(defaultValue, 0, lengthOfTag);
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too long, cut to: " + bytesToHexNpe(usedValue));
+                } else if (defaultValue.length < lengthOfTag) {
+                    // increase length
+                    usedValue = new byte[lengthOfTag];
+                    System.arraycopy(defaultValue, 0, usedValue, 0, defaultValue.length);
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default is too short, increased to: " + bytesToHexNpe(usedValue));
+                } else {
+                    // correct length
+                    usedValue = defaultValue.clone();
+                    //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " default found: " + bytesToHexNpe(usedValue));
+                }
+            } else {
+                // defaultValue is null means the tag was not found in our tags database for default values
+                usedValue = new byte[lengthOfTag];
+                //Log.i(TAG, "asked for tag: " + bytesToHexNpe(tal.getTag().getTagBytes()) + " NO default found, generate zeroed: " + bytesToHexNpe(usedValue));
+            }
+            // now usedValue does have the correct length
+            sb.append(bytesToHexNpe(usedValue));
+            returnString.append(trimStringRight(bytesToHexNpe(tagToSearch),5)).append(trimStringRight(nameOfTag, 36)).append(trimStringRight(String.valueOf(lengthOfTag), 3)).append(bytesToHexBlankNpe(usedValue)).append("\n");
+        }
+        returnString.append("-----------------------------------------------------").append("\n");
+        String constructedGpoString = sb.toString();
+        String tagLength2d = bytesToHexNpe(intToByteArray(valueOfTagSum)); // length value
+        String tagLength2dAnd2 = bytesToHexNpe(intToByteArray(valueOfTagSum + 2)); // length value + 2
+        String constructedGpoCommandString = "80A80000" + tagLength2dAnd2 + "83" + tagLength2d + constructedGpoString + "00";
+        result[0] = hexToBytes(constructedGpoCommandString);
+        result[1] = returnString.toString().getBytes(StandardCharsets.UTF_8);
+        return result;
+    }
+
+    /**
+     * step 4 code end
+     */
+
 
     /**
      * add blanks to a string on right side up to a length of len
