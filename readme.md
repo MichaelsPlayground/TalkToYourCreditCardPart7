@@ -1,6 +1,6 @@
-# Talk to your Credit Card
+# Talk to your Credit Card part 0
 
-This app shows how to talk with a Credit Card and get informations like the Credit Card number, 
+This app shows how to talk with a Credit Card and get information's like the Credit Card number, 
 the card's expiration date and some other data.
 
 A general description can be found in an article series on medium.com:
@@ -16,14 +16,14 @@ A general description can be found in an article series on medium.com:
 
 The app uses the NFC **ReaderMode** to get access to the card.
 
-There are apps available for each step in my GitHub repository naming shows the step that has the code including this step.
+There are apps available for each step in my GitHub repository - the naming shows the step that has the code including this step.
 
 This is the app for the general overview, means it is the basic app that has a very limited functionality: it detects the presence of a Credit Card 
-near the device's NFC reader:
+near the device's NFC reader: **TalkToYourCreditCardPart0**.
 
 The app is tested on real Android devices running Android versions 5.0.1, 8.0 and 13.
 
-There are 2 dependencies necessary for the app to run:
+There are 3 dependencies necessary for the app to run:
 
 build.gradle:
 ```plaintext
@@ -48,11 +48,26 @@ These are the steps to read a payment card, it is a kind of "question & answer" 
 - read all files given in the AFL list and find the file where there are the elements "Application Primary Account Number" and "Application Expiration Date"
 - print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
 
+![Alt Text](https://thepracticaldev.s3.amazonaws.com/i/9tkmgg6z7s5fup0vxfxs.png)
 
-## Sound resources for pings: https://m2.material.io/design/sound/sound-resources.html
 
-Licensed under Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/legalcode
 
+In AndroidManifest.xml grant these permissions:
+```plaintext
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+```
+
+Dependencies in build.gradle (app):
+```plaintext
+    // parsing BER-TLV encoded data, e.g. a credit card
+    // source: https://github.com/evsinev/ber-tlv
+    implementation 'com.payneteasy:ber-tlv:1.0-11'
+
+    // pretty printing of card's responses
+    // source: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
+    implementation 'com.github.devnied.emvnfccard:library:3.0.1'
+```
 ## Library ber-tlv
 
 Source code: https://github.com/evsinev/ber-tlv
@@ -71,39 +86,7 @@ Source code: https://github.com/medyo/android-about-page
 
 License: The MIT License (MIT)
 
+## Sound resources for pings: https://m2.material.io/design/sound/sound-resources.html
 
-```plaintext
-You are free to:
-Share — copy and redistribute the material in any medium or format
-Adapt — remix, transform, and build upon the material
-for any purpose, even commercially.
-This license is acceptable for Free Cultural Works.
-The licensor cannot revoke these freedoms as long as you follow the license terms.
-```
+Licensed under Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/legalcode
 
-
-Amexco gpo command:
-```plaintext
-------------------------------------
-80 12 -- Response Message Template Format 1
-      18 00 08 01 01 00 08 03 03 00 08 05 05 00 10 02
-      02 00 (BINARY)
-90 00 -- Command successfully executed (OK)
-------------------------------------
-```
-
-In AndroidManifest.xml grant these permissions:
-```plaintext
-
-```
-
-Dependencies in build.gradle (app):
-```plaintext
-    // parsing BER-TLV encoded data, e.g. a credit card
-    // source: https://github.com/evsinev/ber-tlv
-    implementation 'com.payneteasy:ber-tlv:1.0-11'
-
-    // pretty printing of card's responses
-    // source: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
-    implementation 'com.github.devnied.emvnfccard:library:3.0.1'
-```
