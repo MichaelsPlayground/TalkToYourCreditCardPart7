@@ -18,7 +18,7 @@ The app uses the NFC **ReaderMode** to get access to the card.
 
 There are apps available for each step in my GitHub repository - the naming shows the step that has the code including this step.
 
-This is the app for the first step 2: **identify applications on the card** in **TalkToYourCreditCardPart2**.
+This is the app for the second step 2: **identify applications on the card** in **TalkToYourCreditCardPart2**.
 
 The app is tested on real Android devices running Android versions 5.0.1, 8.0 and 13.
 
