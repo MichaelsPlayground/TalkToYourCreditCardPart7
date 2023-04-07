@@ -140,7 +140,23 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                      * step 1 code start
                      */
 
+                    printStepHeader(1, "select PPSE");
+                    byte[] PPSE = "2PAY.SYS.DDF01".getBytes(StandardCharsets.UTF_8); // PPSE
+                    byte[] selectPpseCommand = selectApdu(PPSE);
+                    byte[] selectPpseResponse = nfc.transceive(selectPpseCommand);
+                    writeToUiAppend("01 select PPSE command  length " + selectPpseCommand.length + " data: " + bytesToHexNpe(selectPpseCommand));
+                    writeToUiAppend("01 select PPSE response length " + selectPpseResponse.length + " data: " + bytesToHexNpe(selectPpseResponse));
+                    writeToUiAppend(etData, "01 select PPSE completed");
+                    writeToUiAppend(prettyPrintDataToString(selectPpseResponse));
 
+                    byte[] selectPpseResponseOk = checkResponse(selectPpseResponse);
+                    // proceed only when te do have a positive read result = 0x'9000' at the end of response data
+                    if (selectPpseResponseOk != null) {
+
+                    } else {
+                    // if (isoDepInTechList) {
+                    writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
+                }
 
                     /**
                      * step 1 code end
@@ -173,6 +189,31 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
      * section for emv reading
      */
 
+    /**
+     * step 1 code start
+     */
+
+    /**
+     * build a select apdu command
+     *
+     * @param data
+     * @return
+     */
+    private byte[] selectApdu(@NonNull byte[] data) {
+        byte[] commandApdu = new byte[6 + data.length];
+        commandApdu[0] = (byte) 0x00;  // CLA
+        commandApdu[1] = (byte) 0xA4;  // INS
+        commandApdu[2] = (byte) 0x04;  // P1
+        commandApdu[3] = (byte) 0x00;  // P2
+        commandApdu[4] = (byte) (data.length & 0x0FF);       // Lc
+        System.arraycopy(data, 0, commandApdu, 5, data.length);
+        commandApdu[commandApdu.length - 1] = (byte) 0x00;  // Le
+        return commandApdu;
+    }
+
+    /**
+     * step 1 code end
+     */
 
     /**
      * add blanks to a string on right side up to a length of len
