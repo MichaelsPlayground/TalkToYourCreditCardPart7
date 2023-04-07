@@ -48,7 +48,7 @@ These are the steps to read a payment card, it is a kind of "question & answer" 
 - read all files given in the AFL list and find the file where there are the elements "Application Primary Account Number" and "Application Expiration Date"
 - print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
 
-![step 0: after reading a Credit Card](docs/.app00.png)
+![step 0: after reading a Credit Card](/docs/.app00.png)
 
 In AndroidManifest.xml grant these permissions:
 ```plaintext
