@@ -183,6 +183,31 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                          * step 2 code end
                          */
 
+                        /**
+                         * step 3 code start
+                         */
+
+                        // step 03: iterating through aidList by selecting AID
+                        for (int aidNumber = 0; aidNumber < tag4fList.size(); aidNumber++) {
+                            byte[] aidSelected = aidList.get(aidNumber);
+                            writeToUiAppend("");
+                            printStepHeader(3, "select application by AID");
+                            writeToUiAppend("03 select application by AID " + bytesToHexNpe(aidSelected) + " (number " + (aidNumber + 1) + ")");
+                            byte[] selectAidCommand = selectApdu(aidSelected);
+                            byte[] selectAidResponse = nfc.transceive(selectAidCommand);
+                            writeToUiAppend("");
+                            writeToUiAppend("03 select AID command  length " + selectAidCommand.length + " data: " + bytesToHexNpe(selectAidCommand));
+                            writeToUiAppend("03 select AID response length " + selectAidResponse.length + " data: " + bytesToHexNpe(selectAidResponse));
+                            writeToUiAppend(prettyPrintDataToString(selectAidResponse));
+                            writeToUiAppend(etData, "03 select AID completed");
+                            //}
+
+                        } // for (int aidNumber = 0; aidNumber < tag4fList.size(); aidNumber++) {
+
+                        /**
+                         * step 3 code end
+                         */
+
                     } else {
                         // if (isoDepInTechList) {
                         writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
