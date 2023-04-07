@@ -2,5 +2,5 @@
     <string name="app_name">Talk to your Credit Card</string>
     <string name="action_licenses">Used libraries and their licenses</string>
     <string name="copy_right" translatable="false">Copyrights © %1$d</string>
-    <string name="app_description">This is the first app (part 1) for the \"Talk to your Credit Card\" application.\n\nThe full app reads your Credit Card and retrieves the card number and expiration date.</string>
+    <string name="app_description">This is the second app (part 2) for the \"Talk to your Credit Card\" application.\n\nThe full app reads your Credit Card and retrieves the card number and expiration date.</string>
 </resources>

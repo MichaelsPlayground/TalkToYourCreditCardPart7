@@ -42,6 +42,14 @@ timeout new: 10000 ms
 
 
 *********************************
+************ step 02 ************
+* search applications on card   *
+*********************************
+02 analyze select PPSE response and search for tag 0x4F (applications on card)
+Found tag 0x4F 1 time:
+application Id (AID): a0000000041010
+
+*********************************
 ************ step 99 ************
 * our journey ends              *
 *********************************

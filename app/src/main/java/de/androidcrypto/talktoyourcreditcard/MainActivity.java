@@ -153,6 +153,36 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     // proceed only when te do have a positive read result = 0x'9000' at the end of response data
                     if (selectPpseResponseOk != null) {
 
+                        /**
+                         * step 2 code start
+                         */
+
+                        //writeToUiAppend("");
+                        printStepHeader(2, "search applications on card");
+                        writeToUiAppend("02 analyze select PPSE response and search for tag 0x4F (applications on card)");
+
+                        BerTlvParser parser = new BerTlvParser();
+                        BerTlvs tlv4Fs = parser.parse(selectPpseResponseOk);
+                        // find all entries for tag 0x4f
+                        List<BerTlv> tag4fList = tlv4Fs.findAll(new BerTag(0x4F));
+                        if (tag4fList.size() < 1) {
+                            writeToUiAppend("there is no tag 0x4F available, stopping here");
+                            startEndSequence(nfc);
+                        }
+                        writeToUiAppend("Found tag 0x4F " + tag4fList.size() + (tag4fList.size() == 1 ? " time:" : " times:"));
+                        ArrayList<byte[]> aidList = new ArrayList<>();
+                        for (int i4f = 0; i4f < tag4fList.size(); i4f++) {
+                            BerTlv tlv4f = tag4fList.get(i4f);
+                            byte[] tlv4fBytes = tlv4f.getBytesValue();
+                            aidList.add(tlv4fBytes);
+                            writeToUiAppend("application Id (AID): " + bytesToHexNpe(tlv4fBytes));
+                        }
+                        writeToUiAppend(etData, "02 analyze select PPSE response completed");
+
+                        /**
+                         * step 2 code end
+                         */
+
                     } else {
                         // if (isoDepInTechList) {
                         writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
