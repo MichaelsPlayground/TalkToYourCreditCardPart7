@@ -154,9 +154,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     if (selectPpseResponseOk != null) {
 
                     } else {
-                    // if (isoDepInTechList) {
-                    writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
-                }
+                        // if (isoDepInTechList) {
+                        writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
+                    }
 
                     /**
                      * step 1 code end
@@ -182,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         writeToUiFinal(etLog);
         setLoadingLayoutVisibility(false);
     }
-
 
 
     /**
@@ -218,6 +217,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     /**
      * add blanks to a string on right side up to a length of len
      * if the data.length >= len one character is deleted to get minimum one blank
+     *
      * @param data
      * @param len
      * @return
@@ -278,13 +278,15 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     /**
      * converts a byte array to a hex encoded string
      * This method is Null Pointer Exception (NPE) safe
+     *
      * @param bytes
      * @return hex encoded string with a blank after each value
      */
     public static String bytesToHexBlankNpe(byte[] bytes) {
         if (bytes == null) return "";
         StringBuffer result = new StringBuffer();
-        for (byte b : bytes) result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1)).append(" ");
+        for (byte b : bytes)
+            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1)).append(" ");
         return result.toString();
     }
 
@@ -319,6 +321,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     /**
      * converts a byte to its hex string representation
+     *
      * @param data
      * @return
      */
@@ -435,7 +438,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     /**
      * Sound files downloaded from Material Design Sounds
      * https://m2.material.io/design/sound/sound-resources.html
-     *
      */
     private void playSinglePing() {
         MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_02);
