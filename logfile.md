@@ -1,4 +1,4 @@
-# Complete log file when reading a Credit Card
+# Complete log file after reading a Credit Card
 
 ```plaintext
 NFC tag discovered
