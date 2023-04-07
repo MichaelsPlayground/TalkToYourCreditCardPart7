@@ -44,4 +44,7 @@ dependencies {
     // pretty printing of card's responses
     // source: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
     implementation 'com.github.devnied.emvnfccard:library:3.0.1'
+
+    // implementing an about page
+    implementation 'io.github.medyo:android-about-page:2.0.0'
 }

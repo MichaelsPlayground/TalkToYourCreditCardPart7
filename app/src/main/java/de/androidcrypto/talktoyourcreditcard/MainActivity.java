@@ -17,6 +17,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +52,11 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+
+import mehdi.sakout.aboutpage.AboutPage;
+import mehdi.sakout.aboutpage.Element;
 
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
@@ -65,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     private String exportStringFileName = "emv.html";
     private final String stepSeparatorString = "*********************************";
     private final String lineSeparatorString = "---------------------------------";
+    Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         etData = findViewById(R.id.etData);
         etLog = findViewById(R.id.etLog);
         loadingLayout = findViewById(R.id.loading_layout);
+
+        context = getApplicationContext();
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
     }
@@ -97,16 +105,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         clearData();
         Log.d(TAG, "NFC tag discovered");
         writeToUiAppend("NFC tag discovered");
-        playPing();
+        playSinglePing();
         setLoadingLayoutVisibility(true);
         byte[] tagId = tag.getId();
         writeToUiAppend("TagId: " + bytesToHexNpe(tagId));
         String[] techList = tag.getTechList();
         writeToUiAppend("TechList found with these entries:");
         boolean isoDepInTechList = false;
-        for (int i = 0; i < techList.length; i++) {
-            writeToUiAppend(techList[i]);
-            if (techList[i].equals("android.nfc.tech.IsoDep")) isoDepInTechList = true;
+        for (String s : techList) {
+            writeToUiAppend(s);
+            if (s.equals("android.nfc.tech.IsoDep")) isoDepInTechList = true;
         }
         // proceed only if tag has IsoDep in the techList
         if (isoDepInTechList) {
@@ -122,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     printStepHeader(0, "our journey begins");
                     writeToUiAppend(etData, "00 reading of the card started");
 
-                    writeToUiAppend("increase IsoDep timeout for long reading");
+                    writeToUiAppend("increase IsoDep timeout for long lasting reading");
                     writeToUiAppend("timeout old: " + nfc.getTimeout() + " ms");
                     nfc.setTimeout(10000);
                     writeToUiAppend("timeout new: " + nfc.getTimeout() + " ms");
@@ -585,13 +593,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             writeToUiAppend("The discovered NFC tag does not have an IsoDep interface.");
         }
         // final cleanup
-        playPing();
+        playDoublePing();
         writeToUiFinal(etLog);
         setLoadingLayoutVisibility(false);
     }
 
     private void startEndSequence(IsoDep nfc) {
-        playPing();
+        playDoublePing();
         writeToUiFinal(etLog);
         setLoadingLayoutVisibility(false);
         vibrate();
@@ -1284,10 +1292,10 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         Downloads:	366
         Licence:	Intended exclusively for private use
          */
-        //MediaPlayer mp = MediaPlayer.create(this, R.raw.ping_ringtone);
+        MediaPlayer mp = MediaPlayer.create(this, R.raw.ping_ringtone);
 
 
-        MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_01);
+        //MediaPlayer mp = MediaPlayer.create(this, R.raw.notification_decorative_01);
         mp.start();
     }
 
@@ -1466,6 +1474,10 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
     }
 
+    /**
+     * options menu show licenses
+     */
+
     // run: displayLicensesAlertDialog();
     // display licenses dialog see: https://bignerdranch.com/blog/open-source-licenses-and-android/
     private void displayLicensesAlertDialog() {
@@ -1516,12 +1528,53 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         mLicenses.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Log.i(TAG, "mELicenses");
+                Log.i(TAG, "mLicenses");
                 displayLicensesAlertDialog();
                 return false;
             }
         });
 
+        MenuItem mAbout = menu.findItem(R.id.action_about);
+        mAbout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Log.i(TAG, "mLicenses");
+                CharSequence description = "This is the basic app for the Talk to your Credit Card application";
+                View aboutPage = new AboutPage(context)
+                        .isRTL(false)
+                        .setDescription(getString(R.string.app_description))
+                        //.setCustomFont(String) // or Typeface
+                        .setImage(R.drawable.ic_launcher_playstore)
+                        .addItem(new Element().setTitle("Version 1.0"))
+                        .addGroup("Connect with us")
+                        .addEmail("androidcrypto@gmx.de")
+                        .addWebsite("https://medium.com/@androidcrypto")
+                        .addGitHub("androidcrypto")
+                        .addItem(getCopyRightsElement())
+                        .create();
+                setContentView(aboutPage);
+                return false;
+            }
+        });
+
         return super.onCreateOptionsMenu(menu);
+    }
+
+    Element getCopyRightsElement() {
+        Element copyRightsElement = new Element();
+        final String copyrights = String.format(getString(R.string.copy_right), Calendar.getInstance().get(Calendar.YEAR));
+        copyRightsElement.setTitle(copyrights);
+        copyRightsElement.setIconDrawable(R.drawable.about_icon_copy_right);
+        copyRightsElement.setAutoApplyIconTint(true);
+        copyRightsElement.setIconTint(mehdi.sakout.aboutpage.R.color.about_item_icon_color);
+        copyRightsElement.setIconNightTint(android.R.color.white);
+        copyRightsElement.setGravity(Gravity.CENTER);
+        copyRightsElement.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, copyrights, Toast.LENGTH_SHORT).show();
+            }
+        });
+        return copyRightsElement;
     }
 }

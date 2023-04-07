@@ -17,4 +17,9 @@
         android:title="Licenses"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_about"
+        android:title="About the app"
+        app:showAsAction="never"/>
+
 </menu>

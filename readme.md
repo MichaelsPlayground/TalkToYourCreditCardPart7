@@ -34,6 +34,9 @@ build.gradle:
     // pretty printing of card's responses
     // source: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
     implementation 'com.github.devnied.emvnfccard:library:3.0.1'
+    
+    // implementing an about page
+    implementation 'io.github.medyo:android-about-page:2.0.0'
 ```
 
 These are the steps to read a payment card, it is a kind of "question & answer" workflow:
@@ -61,6 +64,12 @@ License:  Apache-2.0 license
 Source code: https://github.com/devnied/EMV-NFC-Paycard-Enrollment
 
 License: Apache-2.0 license
+
+## Library: Android About Page
+
+Source code: https://github.com/medyo/android-about-page
+
+License: The MIT License (MIT)
 
 
 ```plaintext
