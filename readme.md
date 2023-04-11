@@ -1,4 +1,4 @@
-# Talk to your Credit Card part 4
+# Talk to your Credit Card part 7
 
 This app shows how to talk with a Credit Card and get information's like the Credit Card number, 
 the card's expiration date and some other data.
@@ -18,7 +18,7 @@ The app uses the NFC **ReaderMode** to get access to the card.
 
 There are apps available for each step in my GitHub repository - the naming shows the step that has the code including this step.
 
-This is the app for the fourth step 4: **get the processing options** in **TalkToYourCreditCardPart4**.
+This is the app for the (final) seventh step 7: **find and print out the "Application Primary Account Number" ("PAN") = card number** in **TalkToYourCreditCardPart7**.
 
 The app is tested on real Android devices running Android versions 5.0.1, 8.0 and 13.
 
@@ -31,7 +31,7 @@ These are the steps to read a payment card, it is a kind of "question & answer" 
 - read all files given in the AFL list and find the file where there are the elements "Application Primary Account Number" and "Application Expiration Date"
 - print out the "Application Primary Account Number" ("PAN") = card number and "Application Expiration Date" = expiration date of the card.
 
-![step 2: after reading a Credit Card](docs/app04a.png?raw=true) ![step 2: after reading a Credit Card](docs/app04b.png?raw=true)
+![step 2: after reading a Credit Card](docs/app07a.png?raw=true) ![step 2: after reading a Credit Card](docs/app07b.png?raw=true)
 
 In AndroidManifest.xml grant these permissions:
 ```plaintext

@@ -371,6 +371,10 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
                                     writeToUiAppend("06 read the files from card skipped");
                                     writeToUiAppend(etData, "06 read the files from card skipped");
 
+                                    /**
+                                     * step 7 code start
+                                     */
+
                                     writeToUiAppend("the response contains a Track 2 Equivalent Data tag [tag 0x57]");
                                     byte[] gpoResponseTag57 = tag57.getBytesValue();
                                     writeToUiAppend("found tag 0x57 in the gpoResponse length: " + gpoResponseTag57.length + " data: " + bytesToHexNpe(gpoResponseTag57));
@@ -389,6 +393,10 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
                                     writeToUiAppend(etData,"PAN: " + pan);
                                     writeToUiAppend(etData, expirationDateString);
                                     writeToUiAppend("");
+
+                                    /**
+                                     * step 7 code end
+                                     */
                                 }
 
                                 /**
@@ -488,6 +496,10 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
                                             System.out.println("readRecord response length: " + readRecordResponse.length + " data: " + bytesToHexNpe(readRecordResponse));
                                             System.out.println(prettyPrintDataToString(readRecordResponse));
 
+                                            /**
+                                             * step 7 code start
+                                             */
+
                                             // checking for PAN and Expiration Date
                                             try {
                                                 BerTlvs tlvsReadRecord = parser.parse(readRecordResponse);
@@ -521,6 +533,11 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
                                                 System.out.println("Runtime Exception: " + e.getMessage());
                                                 //startEndSequence(nfc);
                                             }
+
+                                            /**
+                                             * step 7 code end
+                                             */
+
                                         } else {
                                             writeToUiAppend("readRecord response was NULL");
                                         }
@@ -761,9 +778,8 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
 
 
     /**
-     * step xx code start
+     * step 7 code start
      */
-
 
     private String getPanFromTrack2EquivalentData(byte[] track2Data) {
         if (track2Data != null) {
@@ -802,6 +818,9 @@ public class MainActivityFull extends AppCompatActivity implements NfcAdapter.Re
         return input.substring(0, index + 1);
     }
 
+    /**
+     * step 7 code end
+     */
 
     /**
      * section for single read commands

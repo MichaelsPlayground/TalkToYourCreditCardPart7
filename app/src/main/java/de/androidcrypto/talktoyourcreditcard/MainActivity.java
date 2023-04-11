@@ -34,18 +34,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.github.devnied.emvnfccard.enums.CommandEnum;
-import com.github.devnied.emvnfccard.exception.CommunicationException;
-import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
-import com.github.devnied.emvnfccard.iso7816emv.impl.DefaultTerminalImpl;
-import com.github.devnied.emvnfccard.utils.CommandApdu;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.payneteasy.tlv.BerTag;
 import com.payneteasy.tlv.BerTlv;
 import com.payneteasy.tlv.BerTlvParser;
 import com.payneteasy.tlv.BerTlvs;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigInteger;
@@ -94,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     /**
      * This method is run in another thread when a card is discovered
-     * This method cannot cannot direct interact with the UI Thread
+     * This method cannot direct interact with the UI Thread
      * Use `runOnUiThread` method to change the UI from this method
      *
      * @param tag discovered tag
@@ -262,6 +256,251 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                                 printStepHeader(5, "get the processing options");
                                 writeToUiAppend("05 get the processing options  command length: " + gpoRequestCommand.length + " data: " + bytesToHexNpe(gpoRequestCommand));
 
+                                /**
+                                 * step 5 code starts
+                                 */
+
+                                /**
+                                 * WARNING: each get processing options request increases the icc internal
+                                 * 'application transaction counter'. If the 2 byte long counter reaches the
+                                 * maximum of '65535' (0xFFFF) the card will no longer accept any read commands
+                                 * and the card is irretrievable damaged.
+                                 * DO NOT RUN THIS COMMAND IN A LOOP !
+                                 */
+
+                                byte[] gpoRequestResponse = nfc.transceive(gpoRequestCommand);
+                                byte[] gpoRequestResponseOk;
+                                writeToUiAppend(etData, "05 get the processing options completed");
+                                if (gpoRequestResponse != null) {
+                                    writeToUiAppend("05 get the processing options response length: " + gpoRequestResponse.length + " data: " + bytesToHexNpe(gpoRequestResponse));
+                                    gpoRequestResponseOk = checkResponse(gpoRequestResponse);
+                                    if (gpoRequestResponseOk != null) {
+                                        writeToUiAppend(prettyPrintDataToString(gpoRequestResponse));
+                                    }
+
+                                } else {
+                                    writeToUiAppend(etData, "05 get the processing options failed");
+                                    writeToUiAppend("The command for get processing options failed. It might be a good idea to use an alternate tag 0x9966 Terminal Transaction Qualifiers");
+                                    startEndSequence(nfc);
+                                    // the app will end here
+                                }
+
+                                /**
+                                 * step 5 code end
+                                 */
+
+                                /**
+                                 * step 6 code start
+                                 */
+
+                                // parse content of gpoResponse to get Track 2 or AFL
+
+                                /**
+                                 * We do have 3 scenarios to work with:
+                                 * a) the response contains a Track 2 Equivalent Data tag (tag 0x57)
+                                 * b) the response is of type 'Response Message Template Format 1' (tag 0x80)
+                                 * c) the response is of type 'Response Message Template Format 2' (tag 0x77)
+                                 */
+                                BerTlvs tlvsGpo = parser.parse(gpoRequestResponse);
+                                byte[] aflBytes = null;
+
+                                /**
+                                 * workflow a)
+                                 * The response contains a Track 2 Equivalent Data tag and from this we can directly
+                                 * retrieve the Primary Application Number (PAN, here the Credit Card Number)
+                                 * found using a VisaCard
+                                 */
+
+                                BerTlv tag57 = tlvsGpo.find(new BerTag(0x57));
+                                if (tag57 != null) {
+                                    //writeToUiAppend("");
+                                    writeToUiAppend("workflow a)");
+                                    writeToUiAppend("");
+                                    printStepHeader(6, "read files & search PAN");
+                                    writeToUiAppend("06 read the files from card skipped");
+                                    writeToUiAppend(etData, "06 read the files from card skipped");
+
+                                    writeToUiAppend("the response contains a Track 2 Equivalent Data tag [tag 0x57]");
+
+                                    /**
+                                     * step 7 code start
+                                     */
+
+                                    writeToUiAppend("the response contains a Track 2 Equivalent Data tag [tag 0x57]");
+                                    byte[] gpoResponseTag57 = tag57.getBytesValue();
+                                    writeToUiAppend("found tag 0x57 in the gpoResponse length: " + gpoResponseTag57.length + " data: " + bytesToHexNpe(gpoResponseTag57));
+                                    String pan = getPanFromTrack2EquivalentData(gpoResponseTag57);
+                                    String expDate = getExpirationDateFromTrack2EquivalentData(gpoResponseTag57);
+                                    writeToUiAppend("found a PAN " + pan + " with Expiration date: " + expDate);
+                                    writeToUiAppend("");
+                                    printStepHeader(7, "print PAN & expire date");
+                                    writeToUiAppend("07 get PAN and Expiration date from tag 0x57 (Track 2 Equivalent Data)");
+                                    writeToUiAppend(etData, "07 get PAN and Expiration date from tag 0x57 (Track 2 Equivalent Data) completed");
+                                    writeToUiAppend("data for AID " + bytesToHexNpe(aidSelected));
+                                    writeToUiAppend("PAN: " + pan);
+                                    String expirationDateString = "Expiration date (" + (expDate.length() == 4 ? "YYMM): " : "YYMMDD): ") + expDate;
+                                    writeToUiAppend(expirationDateString);
+                                    writeToUiAppend(etData, "data for AID " + bytesToHexNpe(aidSelected));
+                                    writeToUiAppend(etData,"PAN: " + pan);
+                                    writeToUiAppend(etData, expirationDateString);
+                                    writeToUiAppend("");
+
+                                    /**
+                                     * step 7 code end
+                                     */
+
+                                }
+
+                                /**
+                                 * workflow b)
+                                 * The response is of type 'Response Message Template Format 1' and we need to know
+                                 * the meaning of each byte, so we need to parse the content to get the data for the
+                                 * 'Application File Locator' (AFL).
+                                 * found using a American Express Card
+                                 */
+
+                                BerTlv tag80 = tlvsGpo.find(new BerTag(0x80));
+                                if (tag80 != null) {
+                                    //writeToUiAppend("");
+                                    writeToUiAppend("workflow b)");
+                                    writeToUiAppend("the response is of type 'Response Message Template Format 1' [tag 0x80]");
+                                    byte[] gpoResponseTag80 = tag80.getBytesValue();
+                                    writeToUiAppend("found tag 0x80 in the gpoResponse length: " + gpoResponseTag80.length + " data: " + bytesToHexNpe(gpoResponseTag80));
+                                    aflBytes = Arrays.copyOfRange(gpoResponseTag80, 2, gpoResponseTag80.length);
+                                }
+
+
+                                /**
+                                 * workflow c)
+                                 * The response is of type 'Response Message Template Format 2' and we need to find
+                                 * tag 0x94; the content is the 'Application File Locator' (AFL)
+                                 * found using a MasterCard
+                                 */
+
+                                BerTlv tag77 = tlvsGpo.find(new BerTag(0x77));
+                                if (tag77 != null) {
+                                    //writeToUiAppend("");
+                                    writeToUiAppend("workflow c)");
+                                    writeToUiAppend("the response is of type 'Response Message Template Format 2' [tag 0x77]");
+                                    writeToUiAppend("found tag 0x77 in the gpoResponse");
+                                }
+                                BerTlv tag94 = tlvsGpo.find(new BerTag(0x94));
+                                if (tag94 != null) {
+                                    writeToUiAppend("found 'AFL' [tag 0x94] in the response of type 'Response Message Template Format 2' [tag 0x77]");
+                                    byte[] gpoResponseTag94 = tag94.getBytesValue();
+                                    writeToUiAppend("found tag 0x94 in the gpoResponse length: " + gpoResponseTag94.length + " data: " + bytesToHexNpe(gpoResponseTag94));
+                                    aflBytes = gpoResponseTag94;
+                                }
+
+                                writeToUiAppend("");
+                                printStepHeader(6, "read files & search PAN");
+                                writeToUiAppend("06 read the files from card and search for PAN & Expiration date");
+                                writeToUiAppend(etData, "06 read the files from card and search for PAN & Expiration date");
+
+                                List<byte[]> tag94BytesList = divideArray(aflBytes, 4);
+                                int tag94BytesListLength = tag94BytesList.size();
+                                //writeToUiAppend(etLog, "tag94Bytes divided into " + tag94BytesListLength + " arrays");
+                                writeToUiAppend("");
+                                writeToUiAppend("The AFL contains " + tag94BytesListLength + (tag94BytesListLength == 1 ? " entry to read" : " entries to read"));
+
+                                // the AFL is a 4 byte long byte array, so I your aflBytes array is 12 bytes long there are three sets to read.
+
+                                /**
+                                 * now we are going to read the specified files from the card. The system is as follows:
+                                 * The first byte is the SFI, the second byte the first record to read,
+                                 * the third byte is the last record to read and byte 4 gives the number
+                                 * of sectors involved in offline authorization.
+                                 * Here an example: 10 01 03 00
+                                 * SFI:             10
+                                 * first record:       01
+                                 * last record:           03
+                                 * offline:                  00
+                                 * means that we are asked to read 3 records (number 1, 2 and 3) from SFI 10
+                                 *
+                                 * The fourth byte codes the number of records involved in offline data
+                                 * authentication starting with the record number coded in the second byte. The
+                                 * fourth byte may range from zero to the value of the third byte less the value of
+                                 * the second byte plus 1.
+                                 */
+
+                                for (int i = 0; i < tag94BytesListLength; i++) {
+                                    byte[] tag94BytesListEntry = tag94BytesList.get(i);
+                                    byte sfiOrg = tag94BytesListEntry[0];
+                                    byte rec1 = tag94BytesListEntry[1];
+                                    byte recL = tag94BytesListEntry[2];
+                                    byte offl = tag94BytesListEntry[3]; // offline authorization
+                                    int sfiNew = (byte) sfiOrg | 0x04; // add 4 = set bit 3
+                                    int numberOfRecordsToRead = (byteToInt(recL) - byteToInt(rec1) + 1);
+                                    writeToUiAppend("for SFI " + byteToHex(sfiOrg) + " we read " + numberOfRecordsToRead + (numberOfRecordsToRead == 1 ? " record" : " records"));
+                                    // read records
+                                    byte[] readRecordResponse = new byte[0];
+                                    for (int iRecord = (int) rec1; iRecord <= (int) recL; iRecord++) {
+                                        byte[] cmd = hexToBytes("00B2000400");
+                                        cmd[2] = (byte) (iRecord & 0x0FF);
+                                        cmd[3] |= (byte) (sfiNew & 0x0FF);
+                                        writeToUiAppend("readRecord  command length: " + cmd.length + " data: " + bytesToHexNpe(cmd));
+                                        readRecordResponse = nfc.transceive(cmd);
+                                        byte[] readRecordResponseTag5a = null;
+                                        byte[] readRecordResponseTag5f24 = null;
+                                        if (readRecordResponse != null) {
+                                            writeToUiAppend("readRecord response length: " + readRecordResponse.length + " data: " + bytesToHexNpe(readRecordResponse));
+                                            writeToUiAppend(prettyPrintDataToString(readRecordResponse));
+                                            System.out.println("readRecord response length: " + readRecordResponse.length + " data: " + bytesToHexNpe(readRecordResponse));
+                                            System.out.println(prettyPrintDataToString(readRecordResponse));
+
+                                            /**
+                                             * step 7 code start
+                                             */
+
+                                            // checking for PAN and Expiration Date
+                                            try {
+                                                BerTlvs tlvsReadRecord = parser.parse(readRecordResponse);
+                                                BerTlv tag5a = tlvsReadRecord.find(new BerTag(0x5a));
+                                                if (tag5a != null) {
+                                                    readRecordResponseTag5a = tag5a.getBytesValue();
+                                                    writeToUiAppend("found tag 0x5a in the readRecordResponse length: " + readRecordResponseTag5a.length + " data: " + bytesToHexNpe(readRecordResponseTag5a));
+                                                }
+                                                BerTlv tag5f24 = tlvsReadRecord.find(new BerTag(0x5f, 0x24));
+                                                if (tag5f24 != null) {
+                                                    readRecordResponseTag5f24 = tag5f24.getBytesValue();
+                                                    writeToUiAppend("found tag 0x5f24 in the readRecordResponse length: " + readRecordResponseTag5f24.length + " data: " + bytesToHexNpe(readRecordResponseTag5f24));
+                                                }
+                                                if (readRecordResponseTag5a != null) {
+                                                    String readRecordPanString = removeTrailingF(bytesToHexNpe(readRecordResponseTag5a));
+                                                    String readRecordExpirationDateString = bytesToHexNpe(readRecordResponseTag5f24);
+                                                    writeToUiAppend("");
+                                                    printStepHeader(7, "print PAN & expire date");
+                                                    writeToUiAppend("07 get PAN and Expiration date from tags 0x5a and 0x5f24");
+                                                    writeToUiAppend(etData, "07 get PAN and Expiration date from tags 0x5a and 0x5f24 completed");
+                                                    writeToUiAppend("data for AID " + bytesToHexNpe(aidSelected));
+                                                    writeToUiAppend("PAN: " + readRecordPanString);
+                                                    String expirationDateString = "Expiration date (" + (readRecordExpirationDateString.length() == 4 ? "YYMM): " : "YYMMDD): ") + readRecordExpirationDateString;
+                                                    writeToUiAppend(expirationDateString);
+                                                    writeToUiAppend(etData, "data for AID " + bytesToHexNpe(aidSelected));
+                                                    writeToUiAppend(etData,"PAN: " + readRecordPanString);
+                                                    writeToUiAppend(etData, expirationDateString);
+                                                    writeToUiAppend("");
+                                                }
+                                            } catch (RuntimeException e) {
+                                                System.out.println("Runtime Exception: " + e.getMessage());
+                                                //startEndSequence(nfc);
+                                            }
+
+                                            /**
+                                             * step 7 code end
+                                             */
+
+                                        } else {
+                                            writeToUiAppend("readRecord response was NULL");
+                                        }
+                                    }
+                                }
+
+
+                                /**
+                                 * step 6 code end
+                                 */
+
                             } else { // if (selectAidResponseOk != null) {
                                 writeToUiAppend("the selecting AID command failed");
                             }
@@ -353,7 +592,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
      * [1] = text table with requested tags from pdol with length and value
      */
     private byte[][] getGpoFromPdolExtended(@NonNull byte[] pdol, byte[] alternativeTtq) {
-        // todo implement alternative ttq
 
         byte[][] result = new byte[2][];
         // get the tags in a list
@@ -428,6 +666,51 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     /**
      * step 4 code end
+     */
+
+    /**
+     * step 7 code start
+     */
+
+    private String getPanFromTrack2EquivalentData(byte[] track2Data) {
+        if (track2Data != null) {
+            String track2DataString = bytesToHexNpe(track2Data);
+            int posSeparator = track2DataString.toUpperCase().indexOf("D");
+            return removeTrailingF(track2DataString.substring(0, posSeparator));
+        } else {
+            return "";
+        }
+    }
+
+    private String getExpirationDateFromTrack2EquivalentData(byte[] track2Data) {
+        if (track2Data != null) {
+            String track2DataString = bytesToHexNpe(track2Data);
+            int posSeparator = track2DataString.toUpperCase().indexOf("D");
+            return track2DataString.substring((posSeparator + 1), (posSeparator + 5));
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * remove all trailing 0xF's trailing in the 16 byte length field tag 0x5a = PAN and in Track2EquivalentData
+     * PAN is padded with 'F' if not of length 16
+     *
+     * @param input
+     * @return
+     */
+    private String removeTrailingF(String input) {
+        int index;
+        for (index = input.length() - 1; index >= 0; index--) {
+            if (input.charAt(index) != 'f') {
+                break;
+            }
+        }
+        return input.substring(0, index + 1);
+    }
+
+    /**
+     * step 7 code end
      */
 
 
@@ -915,8 +1198,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         mAbout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Log.i(TAG, "mLicenses");
-                CharSequence description = "This is the basic app for the Talk to your Credit Card application";
+                Log.i(TAG, "mAbout");
                 View aboutPage = new AboutPage(context)
                         .isRTL(false)
                         .setDescription(getString(R.string.app_description))
