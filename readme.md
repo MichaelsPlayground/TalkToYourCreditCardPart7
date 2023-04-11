@@ -22,7 +22,7 @@ This is the app for the (final) seventh step 7: **find and print out the "Applic
 
 The app is tested on real Android devices running Android versions 5.0.1, 8.0 and 13.
 
-A compiled version of the app is available in the "debug-release" folder of this repository: ![app-debug.apk](debug-release/app-debug.apk?raw=true)
+**A compiled version of the app is available in the "debug-release" folder of this repository**: ![app-debug.apk](debug-release/app-debug.apk?raw=true)
 
 These are the steps to read a payment card, it is a kind of "question & answer" workflow:
 - ask the card which applications are available on the card ("select PPSE")
