@@ -73,7 +73,9 @@ Source code: https://github.com/medyo/android-about-page
 
 License: The MIT License (MIT)
 
-## Sound resources for pings: https://m2.material.io/design/sound/sound-resources.html
+## Sound resources for pings
+
+https://m2.material.io/design/sound/sound-resources.html
 
 Licensed under Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/legalcode
 
