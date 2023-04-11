@@ -1,4 +1,4 @@
-# Talk to your Credit Card part 7
+# Talk to your Credit Card part 7 (final app)
 
 This app shows how to talk with a Credit Card and get information's like the Credit Card number, 
 the card's expiration date and some other data.
